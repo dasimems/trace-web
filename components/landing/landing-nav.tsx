@@ -52,7 +52,7 @@ export function LandingNav() {
             size="lg"
             className="rounded-full px-4 shadow-primary"
           >
-            <a href="/auth/sign-up">
+            <a href="/app/overview">
               Open my dashboard <ArrowRight />
             </a>
           </Button>

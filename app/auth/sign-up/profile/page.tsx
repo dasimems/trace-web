@@ -37,7 +37,7 @@ export default function SignUpProfilePage() {
                 size="lg"
                 className="h-11 rounded-full px-5 shadow-primary"
               >
-                <a href="/dashboard">
+                <a href="/app/overview">
                   Open my dashboard <ArrowRight />
                 </a>
               </Button>

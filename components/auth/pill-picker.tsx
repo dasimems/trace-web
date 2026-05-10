@@ -4,43 +4,40 @@ import { motion } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
-export type RoleId =
-  | "trader"
-  | "freelancer"
-  | "salary"
-  | "student"
-  | "small-business"
+export type PillOption<T extends string> = {
+  id: T
+  label: string
+  hint?: string
+}
 
-type Role = { id: RoleId; label: string }
-
-const ROLES: readonly Role[] = [
-  { id: "trader",         label: "Trader / shop owner" },
-  { id: "freelancer",     label: "Freelancer" },
-  { id: "salary",         label: "Salary earner" },
-  { id: "student",        label: "Student hustler" },
-  { id: "small-business", label: "Small business owner" },
-] as const
-
-type RolePickerProps = {
-  value: RoleId | null
-  onChange: (id: RoleId) => void
+type PillPickerProps<T extends string> = {
+  options: ReadonlyArray<PillOption<T>>
+  value: T | null
+  onChange: (id: T) => void
+  ariaLabel: string
   name?: string
 }
 
-export function RolePicker({ value, onChange, name }: RolePickerProps) {
+export function PillPicker<T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+  name,
+}: PillPickerProps<T>) {
   return (
-    <div role="radiogroup" aria-label="What kind of earner are you?">
+    <div role="radiogroup" aria-label={ariaLabel}>
       <div className="flex flex-wrap gap-2">
-        {ROLES.map((role) => {
-          const selected = value === role.id
+        {options.map((option) => {
+          const selected = value === option.id
           return (
             <motion.button
-              key={role.id}
+              key={option.id}
               type="button"
               role="radio"
               aria-checked={selected}
               data-state={selected ? "on" : "off"}
-              onClick={() => onChange(role.id)}
+              onClick={() => onChange(option.id)}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 500, damping: 28 }}
@@ -51,7 +48,7 @@ export function RolePicker({ value, onChange, name }: RolePickerProps) {
                   : "border-border bg-card text-text-2 hover:border-neutral-300 hover:text-foreground dark:hover:border-neutral-700",
               )}
             >
-              {role.label}
+              {option.label}
             </motion.button>
           )
         })}

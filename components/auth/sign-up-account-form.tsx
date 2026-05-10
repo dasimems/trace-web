@@ -8,8 +8,23 @@ import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OAuthButtons } from "@/components/auth/oauth-buttons"
-import { RolePicker, type RoleId } from "@/components/auth/role-picker"
+import { PillPicker, type PillOption } from "@/components/auth/pill-picker"
 import { getNextStep } from "@/components/auth/sign-up-steps"
+
+type RoleId =
+  | "trader"
+  | "freelancer"
+  | "salary"
+  | "student"
+  | "small-business"
+
+const ROLES: ReadonlyArray<PillOption<RoleId>> = [
+  { id: "trader",         label: "Trader / shop owner" },
+  { id: "freelancer",     label: "Freelancer" },
+  { id: "salary",         label: "Salary earner" },
+  { id: "student",        label: "Student hustler" },
+  { id: "small-business", label: "Small business owner" },
+]
 
 function FieldLabel({
   htmlFor,
@@ -19,10 +34,7 @@ function FieldLabel({
   children: React.ReactNode
 }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="text-sm font-medium text-foreground"
-    >
+    <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
       {children}
     </label>
   )
@@ -92,7 +104,13 @@ export function SignUpAccountForm() {
 
       <div className="space-y-3">
         <FieldLabel htmlFor="role">I am a…</FieldLabel>
-        <RolePicker value={role} onChange={setRole} name="role" />
+        <PillPicker
+          options={ROLES}
+          value={role}
+          onChange={setRole}
+          ariaLabel="What kind of earner are you?"
+          name="role"
+        />
         <p className="text-sm text-text-3">
           Helps Copilot tune insights to how you actually earn and spend.
         </p>

@@ -15,7 +15,7 @@ const COACHED = [
 
 export function CopilotContextRail() {
   return (
-    <aside className="space-y-5 border-l border-border bg-background px-6 py-6">
+    <aside className="space-y-5 border-border bg-background px-4 py-5 sm:px-6 sm:py-6 lg:border-l">
       <h3 className="font-mono text-[11px] font-semibold tracking-[0.16em] text-text-3">
         CONTEXT COPILOT IS USING
       </h3>

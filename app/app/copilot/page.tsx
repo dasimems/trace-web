@@ -19,8 +19,8 @@ export default function CopilotPage() {
       title="Financial Copilot"
       meta="Grounded in your transactions. Ask anything about your money."
     >
-      <div className="-mx-6 -my-6 grid lg:-mx-8 lg:-my-8 lg:grid-cols-[1fr_minmax(280px,360px)]">
-        <div className="flex min-h-[calc(100svh-9rem)] flex-col px-6 pb-6 pt-2 lg:px-12 lg:pb-8 lg:pt-4">
+      <div className="-mx-4 -my-5 grid sm:-mx-6 sm:-my-6 lg:-mx-8 lg:-my-8 lg:grid-cols-[1fr_minmax(280px,360px)]">
+        <div className="flex min-h-[calc(100svh-9rem)] flex-col px-4 pb-6 pt-2 sm:px-6 lg:px-12 lg:pb-8 lg:pt-4">
           <div className="flex-1 space-y-6 pb-6">
             <ChatMessage role="user">
               Can I afford a ₦1.2M loan right now?

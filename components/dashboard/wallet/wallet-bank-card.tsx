@@ -18,7 +18,7 @@ export function WalletBankCard() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-3xl bg-neutral-950 p-7 text-white shadow-[0_30px_60px_-20px_rgba(15,17,15,0.55)]"
+      className="relative overflow-hidden rounded-3xl bg-neutral-950 p-5 text-white shadow-[0_30px_60px_-20px_rgba(15,17,15,0.55)] sm:p-7"
     >
       <div
         aria-hidden
@@ -29,7 +29,7 @@ export function WalletBankCard() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_88%_30%,rgba(224,24,91,0.2),transparent_55%)]"
       />
 
-      <div className="relative flex items-start justify-between">
+      <div className="relative flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <LogoMark className="size-9" />
           <div>
@@ -51,13 +51,13 @@ export function WalletBankCard() {
         <div className="font-mono text-[11px] tracking-[0.16em] text-neutral-400">
           ACCOUNT NUMBER
         </div>
-        <div className="mt-2 font-display text-[56px] font-semibold tabular-nums leading-none tracking-[0.08em] text-white">
+        <div className="mt-2 font-display text-4xl font-semibold tabular-nums leading-none tracking-[0.08em] text-white sm:text-[56px]">
           {head}
           <span className="text-lime-500">{tail}</span>
         </div>
       </div>
 
-      <div className="relative mt-8 grid grid-cols-3 gap-4 font-mono text-[11px] tracking-[0.16em]">
+      <div className="relative mt-6 grid grid-cols-2 gap-4 font-mono text-[11px] tracking-[0.16em] sm:mt-8 sm:grid-cols-3">
         <div>
           <div className="text-neutral-500">ACCOUNT NAME</div>
           <div className="mt-1 text-sm tracking-wider text-neutral-100">

@@ -36,7 +36,7 @@ export function MoneyInOutChart() {
         <Badge variant="good" className="h-6 px-2.5 text-[11px]">
           Net +₦174,210
         </Badge>
-        <ul className="ml-auto flex items-center gap-4 text-xs text-text-2">
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-2 sm:ml-auto">
           <li className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-lime-500" />
             Money in

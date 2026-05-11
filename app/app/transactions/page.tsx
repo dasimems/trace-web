@@ -71,7 +71,7 @@ export default function TransactionsPage() {
           />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
           <SpendingHeatmap />
           <CategoryTrendChart />
         </section>

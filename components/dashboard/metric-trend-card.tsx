@@ -45,7 +45,7 @@ export function MetricTrendCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
-      className="col-span-12 rounded-2xl border border-border bg-card p-5 shadow-card sm:col-span-6 xl:col-span-3"
+      className="col-span-12 rounded-2xl border border-border bg-card p-5 shadow-card sm:col-span-6 lg:col-span-3"
     >
       <div className="flex items-start justify-between">
         <div className="text-sm text-text-3">{label}</div>

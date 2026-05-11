@@ -54,7 +54,7 @@ export function SpendingBreakdownCard() {
         </Badge>
       </div>
 
-      <div className="mt-3 flex items-center gap-5">
+      <div className="mt-3 flex flex-wrap items-center gap-5">
         <div className="relative h-[156px] w-[156px] shrink-0">
           {mounted && (
             <ResponsiveContainer>

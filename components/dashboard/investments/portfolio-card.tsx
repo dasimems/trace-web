@@ -62,7 +62,7 @@ export function PortfolioCard() {
         </Badge>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-6">
+      <div className="mt-5 flex flex-wrap items-center gap-5 sm:gap-6">
         <div className="relative h-[160px] w-[160px] shrink-0">
           {mounted && (
             <ResponsiveContainer>

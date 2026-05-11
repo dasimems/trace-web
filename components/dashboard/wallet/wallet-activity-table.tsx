@@ -109,7 +109,7 @@ function formatAmount(amount: number): string {
 
 export function WalletActivityTable() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
           Wallet activity
@@ -117,7 +117,7 @@ export function WalletActivityTable() {
         <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
           This week
         </Badge>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
           <Button variant="outline" size="sm" className="h-8 gap-1 rounded-full px-3 text-xs">
             All types <ChevronDown />
           </Button>
@@ -127,7 +127,8 @@ export function WalletActivityTable() {
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 -mx-4 overflow-x-auto sm:-mx-5">
+        <div className="min-w-[640px] px-4 sm:px-5">
         <Table>
           <TableHeader>
             <TableRow>
@@ -155,6 +156,7 @@ export function WalletActivityTable() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   )

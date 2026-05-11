@@ -71,7 +71,7 @@ export function Hero() {
       />
 
       {/* decorative bracketed frame */}
-      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-6">
+      <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16">
         <div className="relative">
           <CornerBracket position="tl" />
           <CornerBracket position="tr" />
@@ -80,7 +80,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.1 }}
-            className="px-6 pt-10"
+            className="px-3 pt-8 sm:px-6 sm:pt-10"
           >
             <TelemetryStrip />
             <div className="mt-6">
@@ -88,13 +88,13 @@ export function Hero() {
             </div>
           </motion.div>
 
-          <div className="grid gap-10 px-6 pt-12 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-6 lg:pt-16">
+          <div className="grid gap-10 px-3 pt-10 sm:px-6 sm:pt-12 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-6 lg:pt-16">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.2, ease: "easeOut" }}
             >
-              <h1 className="font-display text-5xl font-semibold leading-[1.05] tracking-[-0.02em] text-foreground sm:text-6xl lg:text-[78px]">
+              <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-[78px]">
                 A financial OS
                 <br />
                 for{" "}

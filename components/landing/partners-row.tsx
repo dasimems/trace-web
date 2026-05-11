@@ -20,7 +20,7 @@ export function PartnersRow() {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="border-t border-border"
     >
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-y-3 px-12 py-5">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-5 sm:px-6 lg:px-12">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <span className="text-text-3">Powered by</span>
           {PARTNERS.map((p, i) => (

@@ -68,12 +68,12 @@ export default function OverviewPage() {
           />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <section className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <CashFlowChart />
           <WeeklyAiSummary />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <SpendingBreakdownCard />
           <SmartRecommendationsCard />
           <RiskStabilityCard />

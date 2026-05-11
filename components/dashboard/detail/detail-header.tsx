@@ -19,8 +19,8 @@ type DetailHeaderProps = {
 
 export function DetailHeader({ backHref, breadcrumb, actions }: DetailHeaderProps) {
   return (
-    <header className="flex flex-wrap items-center gap-3 border-b border-border bg-background px-6 py-4 lg:px-8">
-      <SidebarTrigger className="md:hidden" aria-label="Open menu" />
+    <header className="flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+      <SidebarTrigger className="lg:hidden" aria-label="Open menu" />
 
       <Link
         href={backHref}
@@ -50,7 +50,9 @@ export function DetailHeader({ backHref, breadcrumb, actions }: DetailHeaderProp
         ))}
       </nav>
 
-      {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">{actions}</div>
+      )}
     </header>
   )
 }

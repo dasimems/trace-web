@@ -61,7 +61,7 @@ export default function OpportunityDetailPage() {
         }
       />
 
-      <div className="px-6 py-6 lg:px-8 lg:py-8">
+      <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="grid gap-6 xl:grid-cols-[1fr_320px_320px] xl:gap-8">
           <main className="min-w-0 space-y-6">
             <header className="space-y-4">
@@ -82,7 +82,7 @@ export default function OpportunityDetailPage() {
                 </span>
               </div>
 
-              <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-[-0.02em] text-foreground sm:text-5xl">
+              <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-[-0.02em] text-foreground sm:text-4xl lg:text-5xl">
                 SquadCapital · Working Capital Loan
               </h1>
               <p className="max-w-3xl text-base leading-relaxed text-text-2">

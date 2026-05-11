@@ -54,7 +54,7 @@ export function InvestmentPickCard({
 
       <PickSparkline className="mt-4" />
 
-      <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
         <div className="flex gap-6">
           <Stat label="Return" value={pick.return} />
           <Stat label="Risk"   value={pick.risk}   />

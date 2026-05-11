@@ -46,19 +46,19 @@ export function AuthShell({
       </Sidebar>
 
       <SidebarInset className="bg-background">
-        <header className="flex items-center justify-between px-6 py-5 lg:px-12 lg:py-6">
+        <header className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:px-12 lg:py-6">
           <div className="flex items-center gap-3">
-            <SidebarTrigger className="md:hidden" aria-label="Open steps" />
+            <SidebarTrigger className="lg:hidden" aria-label="Open steps" />
             <Link
               href="/"
               aria-label="Trace home"
-              className="inline-block md:hidden"
+              className="inline-block lg:hidden"
             >
               <LogoWordmark />
             </Link>
           </div>
           <div className="text-sm text-text-3">
-            Need help?{" "}
+            <span className="hidden sm:inline">Need help? </span>
             <a
               href={helpHref}
               className="font-medium text-lime-600 transition-colors hover:text-lime-700 dark:text-lime-400"
@@ -68,7 +68,7 @@ export function AuthShell({
           </div>
         </header>
 
-        <div className="flex-1 px-6 pb-16 lg:px-12">{children}</div>
+        <div className="flex-1 px-4 pb-12 sm:px-6 sm:pb-16 lg:px-12">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

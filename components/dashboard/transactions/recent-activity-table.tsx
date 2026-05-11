@@ -162,7 +162,7 @@ function formatAmount(amount: number): string {
 
 export function RecentActivityTable() {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
           Recent activity
@@ -170,8 +170,8 @@ export function RecentActivityTable() {
         <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
           Last 7 days
         </Badge>
-        <div className="ml-auto flex items-center gap-2">
-          <label className="relative flex h-9 w-64 items-center rounded-full border border-border bg-background/50 px-3 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+          <label className="relative flex h-9 w-full items-center rounded-full border border-border bg-background/50 px-3 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 sm:w-64">
             <Search className="size-3.5 shrink-0 text-text-3" />
             <input
               type="search"
@@ -185,7 +185,8 @@ export function RecentActivityTable() {
         </div>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 -mx-4 overflow-x-auto sm:-mx-5">
+        <div className="min-w-[680px] px-4 sm:px-5">
         <Table>
           <TableHeader>
             <TableRow>
@@ -213,6 +214,7 @@ export function RecentActivityTable() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   )

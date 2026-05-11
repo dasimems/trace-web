@@ -32,18 +32,18 @@ export default function WalletPage() {
       }
     >
       <div className="space-y-6">
-        <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <WalletBankCard />
           <AvailableBalanceCard />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <WalletSubBalances />
           <VirtualCardPreview />
           <SendToCard />
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <section className="grid gap-4 xl:grid-cols-[2fr_1fr]">
           <MoneyInOutChart />
           <WalletCopilotCard />
         </section>

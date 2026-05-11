@@ -76,14 +76,14 @@ export function OpportunityCard({
       </h3>
       <p className="mt-1 text-sm text-text-2">{opportunity.description}</p>
 
-      <div className="mt-5 grid grid-cols-4 gap-3 border-t border-border pt-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
         <StatColumn label="Return" value={opportunity.stats.return} />
         <StatColumn label="Risk"   value={opportunity.stats.risk} />
         <StatColumn label="Min"    value={opportunity.stats.min} />
         <StatColumn label="Tenor"  value={opportunity.stats.tenor} />
       </div>
 
-      <div className="mt-5 flex items-center justify-between">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-[10px] font-semibold text-text-2">
             {opportunity.provider.initials}

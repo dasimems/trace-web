@@ -24,13 +24,13 @@ export function TopMatchFeature() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="rounded-3xl border border-lime-300 bg-lime-50/40 p-7 dark:border-lime-500/40 dark:bg-lime-500/5"
+      className="rounded-3xl border border-lime-300 bg-lime-50/40 p-5 dark:border-lime-500/40 dark:bg-lime-500/5 sm:p-7"
     >
-      <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:gap-8">
         <div>
           <span className="ai-badge">Top match · 96%</span>
 
-          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
+          <h2 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
             SquadCapital Working Capital · ₦1.8M
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-2">

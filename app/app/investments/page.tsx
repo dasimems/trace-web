@@ -55,7 +55,7 @@ export default function InvestmentsPage() {
       }
     >
       <div className="space-y-6">
-        <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <PortfolioCard />
           <SafeToInvestCard />
         </section>

@@ -57,7 +57,7 @@ export function CashFlowChart() {
         </ul>
       </div>
 
-      <div className="mt-5 h-[280px] w-full">
+      <div className="mt-5 h-[220px] w-full sm:h-[280px]">
         {mounted && (
           <ResponsiveContainer>
             <LineChart

@@ -66,7 +66,7 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
 
 export function FeatureCards() {
   return (
-    <section className="mx-auto max-w-7xl px-6 pb-20 pt-10">
+    <section className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pb-20">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {FEATURES.map((feature, i) => (
           <FeatureCard key={feature.title} feature={feature} index={i} />

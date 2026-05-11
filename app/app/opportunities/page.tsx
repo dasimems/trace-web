@@ -11,6 +11,7 @@ import { TopMatchFeature } from "@/components/dashboard/opportunities/top-match-
 
 const MORE_MATCHES: ReadonlyArray<Opportunity> = [
   {
+    id: "lagos-trader-coop-fund",
     type: "Investment",
     matchPercent: 91,
     title: "Lagos Trader Coop Fund",
@@ -19,6 +20,7 @@ const MORE_MATCHES: ReadonlyArray<Opportunity> = [
     provider: { initials: "LT", name: "LTC", verified: true },
   },
   {
+    id: "afdb-women-in-trade-grant",
     type: "Grant",
     matchPercent: 88,
     title: "AfDB Women in Trade Grant",
@@ -27,6 +29,7 @@ const MORE_MATCHES: ReadonlyArray<Opportunity> = [
     provider: { initials: "AF", name: "AfDB", verified: true },
   },
   {
+    id: "stanbic-ibtc-mmf",
     type: "Investment",
     matchPercent: 84,
     title: "Stanbic IBTC Money Market Fund",
@@ -35,6 +38,7 @@ const MORE_MATCHES: ReadonlyArray<Opportunity> = [
     provider: { initials: "ST", name: "Stanbic", verified: true },
   },
   {
+    id: "branch-quick-top-up",
     type: "Loan",
     matchPercent: 78,
     title: "Branch · Quick Top-up",
@@ -43,6 +47,7 @@ const MORE_MATCHES: ReadonlyArray<Opportunity> = [
     provider: { initials: "BR", name: "Branch", verified: false },
   },
   {
+    id: "jumia-vendor-boost",
     type: "Partnership",
     matchPercent: 72,
     title: "Jumia Vendor Boost",

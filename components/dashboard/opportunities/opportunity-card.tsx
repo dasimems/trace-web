@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "motion/react"
 import { ArrowRight, Check, Sparkles } from "lucide-react"
 
@@ -26,6 +27,7 @@ const TYPE_BADGE: Record<Tone, string> = {
 }
 
 export type Opportunity = {
+  id: string
   type: OpportunityType
   matchPercent: number
   title: string
@@ -97,11 +99,14 @@ export function OpportunityCard({
           )}
         </div>
         <Button
+          asChild
           variant="lime-outline"
           size="sm"
           className="h-8 gap-1 rounded-full px-3 text-xs"
         >
-          View <ArrowRight />
+          <Link href={`/app/opportunities/${opportunity.id}`}>
+            View <ArrowRight />
+          </Link>
         </Button>
       </div>
     </motion.div>

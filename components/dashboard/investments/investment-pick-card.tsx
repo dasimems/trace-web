@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "motion/react"
 import { ArrowRight, Sparkles } from "lucide-react"
 
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export type InvestmentPick = {
+  id: string
   type: string
   title: string
   description: string
@@ -58,11 +60,14 @@ export function InvestmentPickCard({
           <Stat label="Risk"   value={pick.risk}   />
         </div>
         <Button
+          asChild
           variant="lime-outline"
           size="sm"
           className="h-8 gap-1 rounded-full px-3 text-xs"
         >
-          Allocate <ArrowRight />
+          <Link href={`/app/investments/${pick.id}`}>
+            Allocate <ArrowRight />
+          </Link>
         </Button>
       </div>
     </motion.div>

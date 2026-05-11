@@ -11,6 +11,7 @@ import { SafeToInvestCard } from "@/components/dashboard/investments/safe-to-inv
 
 const PICKS: ReadonlyArray<InvestmentPick> = [
   {
+    id: "stanbic-ibtc-mmf",
     type: "Money market",
     title: "Stanbic IBTC MMF",
     description: "Your buffer earns ~14× your savings APR.",
@@ -19,6 +20,7 @@ const PICKS: ReadonlyArray<InvestmentPick> = [
     confidence: 92,
   },
   {
+    id: "lagos-trader-coop-fund",
     type: "Coop · sector",
     title: "Lagos Trader Coop Fund",
     description: "Same-sector traders averaged 17.4% last year.",
@@ -27,6 +29,7 @@ const PICKS: ReadonlyArray<InvestmentPick> = [
     confidence: 88,
   },
   {
+    id: "fbnquest-eurobond",
     type: "Bond",
     title: "FBNQuest Eurobond",
     description: "USD diversifier — softens NGN moves.",

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "motion/react"
 import { ArrowRight } from "lucide-react"
 
@@ -53,8 +54,10 @@ export function TopMatchFeature() {
           </div>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Button size="lg" className="h-10 rounded-full px-5 shadow-primary">
-              Apply in 4 minutes <ArrowRight />
+            <Button asChild size="lg" className="h-10 rounded-full px-5 shadow-primary">
+              <Link href="/app/opportunities/squadcapital-working-capital">
+                Apply in 4 minutes <ArrowRight />
+              </Link>
             </Button>
             <Button variant="outline" size="lg" className="h-10 rounded-full px-5">
               Simulate repayment

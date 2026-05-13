@@ -34,7 +34,7 @@ export function PartnersRow() {
         </div>
         <div className="flex items-center gap-2 text-sm text-text-3">
           <ShieldCheck className="size-4" />
-          <span>Bank-grade encryption · Read-only access</span>
+          <span>Bank-grade encryption · Read-only access · Every transaction builds your Trace score</span>
         </div>
       </div>
     </motion.section>

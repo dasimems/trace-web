@@ -19,10 +19,10 @@ type RoleId =
   | "small-business"
 
 const ROLES: ReadonlyArray<PillOption<RoleId>> = [
-  { id: "trader",         label: "Trader / shop owner" },
-  { id: "freelancer",     label: "Freelancer" },
+  { id: "trader",         label: "Market trader or shop owner" },
+  { id: "freelancer",     label: "Freelancer or skilled worker" },
   { id: "salary",         label: "Salary earner" },
-  { id: "student",        label: "Student hustler" },
+  { id: "student",        label: "Student entrepreneur" },
   { id: "small-business", label: "Small business owner" },
 ]
 
@@ -112,7 +112,7 @@ export function SignUpAccountForm() {
           name="role"
         />
         <p className="text-sm text-text-3">
-          Helps Copilot tune insights to how you actually earn and spend.
+          Trace personalises your health score, loan matches, and Copilot advice based on how your trade actually works.
         </p>
       </div>
 

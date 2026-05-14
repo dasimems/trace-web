@@ -34,7 +34,7 @@ export function TopMatchFeature() {
             SquadCapital Working Capital · ₦1.8M
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-2">
-           Copilot ranked this #1 because your Squad transaction history shows 9 consecutive weeks of stable cashflow — exactly what SquadCapital's underwriting model {" "}
+           Copilot ranked this #1 because your Squad transaction history shows 9 consecutive weeks of stable cashflow — exactly what SquadCapital&apos;s underwriting model rewards. No collateral. No paperwork. Decision in 4 minutes.
             <span className="font-semibold text-lime-600 dark:text-lime-400">
               rewards.
             </span>

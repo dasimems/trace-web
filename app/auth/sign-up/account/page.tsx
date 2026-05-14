@@ -16,7 +16,7 @@ export default function SignUpAccountPage() {
             Start your Trace.
           </h1>
           <p className="max-w-xl text-base text-text-2">
-            Your business has always been real. Now it's visible.
+            Your business has always been real. Now it&apos;s visible.
           </p>
         </header>
 

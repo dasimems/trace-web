@@ -95,25 +95,22 @@ export function Hero() {
               transition={{ duration: 0.55, delay: 0.2, ease: "easeOut" }}
             >
               <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-[78px]">
-                A financial OS
+                The financial  
                 <br />
-                for{" "}
+                {" "}
                 <span className="relative inline-block text-lime-500">
-                  hustlers
+                  Proof
                   <span
                     aria-hidden
                     className="absolute inset-x-0 -bottom-1 h-px bg-lime-400/70"
                   />
                 </span>{" "}
-                &amp;
                 <br />
-                small business.
+                that unlocks opportunities.
               </h1>
 
               <p className="mt-7 max-w-xl text-base leading-relaxed text-text-2 sm:text-lg">
-                Open a Trace bank account in seconds. Every transaction is
-                parsed in real-time and routed to the loans, grants and
-                investments you actually qualify for.
+                Trace builds the financial proof that unlocks loans, investments and opportunities for 35 million Nigerian traders who transact daily but remain invisible to every financial institution. 
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-5">

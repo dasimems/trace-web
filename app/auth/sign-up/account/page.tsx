@@ -13,11 +13,10 @@ export default function SignUpAccountPage() {
 
         <header className="space-y-3">
           <h1 className="font-display text-4xl font-semibold tracking-[-0.02em] text-foreground sm:text-5xl">
-            Create your account.
+            Start your Trace.
           </h1>
           <p className="max-w-xl text-base text-text-2">
-            One profile, every angle of your money. Use your phone or email —
-            whichever you trust more.
+            Your business has always been real. Now it&apos;s visible.
           </p>
         </header>
 

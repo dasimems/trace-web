@@ -110,7 +110,7 @@ export function Hero() {
               </h1>
 
               <p className="mt-7 max-w-xl text-base leading-relaxed text-text-2 sm:text-lg">
-                Trace builds the financial proof that unlocks loans, investments and opportunities for 35 million Nigerian traders who transact daily but remain invisible to every financial institution. for 35 million Nigerian traders who transact daily but remain invisible to every financial institution.
+                Trace builds the financial proof that unlocks loans, investments and opportunities for 35 million Nigerian traders who transact daily but remain invisible to every financial institution. 
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-5">

@@ -50,11 +50,11 @@ export function CashFlowChart() {
         </Badge>
         <ul className="ml-auto flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-2">
           <li className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-lime-500" />
+            <span className="size-2 rounded-full bg-good-500" />
             Income
           </li>
           <li className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-bad-500" />
+            <span className="size-2 rounded-full bg-primary" />
             Spend
           </li>
           <li className="flex items-center gap-1.5">
@@ -101,12 +101,12 @@ export function CashFlowChart() {
               />
               <Line
                 dataKey="income"
-                stroke="var(--color-lime-500)"
+                stroke="var(--color-good-500)"
                 strokeWidth={2.25}
                 dot={false}
                 activeDot={{
                   r: 5,
-                  fill: "var(--color-lime-500)",
+                  fill: "var(--color-good-500)",
                   stroke: "var(--color-card)",
                   strokeWidth: 2,
                 }}
@@ -114,12 +114,12 @@ export function CashFlowChart() {
               />
               <Line
                 dataKey="spend"
-                stroke="var(--color-bad-500)"
+                stroke="var(--color-primary)"
                 strokeWidth={2.25}
                 dot={false}
                 activeDot={{
                   r: 5,
-                  fill: "var(--color-bad-500)",
+                  fill: "var(--color-primary)",
                   stroke: "var(--color-card)",
                   strokeWidth: 2,
                 }}

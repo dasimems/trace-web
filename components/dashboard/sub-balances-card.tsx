@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo } from "react"
 import { motion } from "motion/react"
+import { RefreshCw } from "lucide-react"
 
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { formatNairaCompact } from "@/lib/money"
@@ -60,7 +62,20 @@ export function SubBalancesCard() {
       transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
       className="col-span-12 rounded-2xl border border-border bg-card p-6 shadow-card sm:col-span-6 xl:col-span-3"
     >
-      <div className="text-sm text-text-3">Sub-balances</div>
+      <div className="flex items-center gap-1.5">
+        <div className="text-sm text-text-3">Sub-balances</div>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label="Refresh sub-balances"
+          title="Refresh sub-balances"
+          onClick={() => fetchPockets()}
+          disabled={isLoading}
+          className="text-text-3 hover:text-foreground"
+        >
+          <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+        </Button>
+      </div>
       {pockets.length > 0 ? (
         <ul className="mt-4 space-y-4">
           {pockets.map((pocket) => {

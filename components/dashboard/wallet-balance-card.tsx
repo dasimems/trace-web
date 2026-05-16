@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { motion } from "motion/react"
-import { ArrowUpRight, CreditCard, Plus, Receipt } from "lucide-react"
+import { ArrowUpRight, CreditCard, Plus, Receipt, RefreshCw } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -47,7 +47,20 @@ export function WalletBalanceCard() {
       className="col-span-12 rounded-2xl border border-border bg-card p-6 shadow-card sm:col-span-6 xl:col-span-4"
     >
       <div className="flex items-start justify-between">
-        <div className="text-sm text-text-3">Wallet balance</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-sm text-text-3">Wallet balance</div>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Refresh wallet balance"
+            title="Refresh wallet balance"
+            onClick={() => fetchWallet()}
+            disabled={isLoading}
+            className="text-text-3 hover:text-foreground"
+          >
+            <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+          </Button>
+        </div>
         <Badge variant="good" className="h-6 px-2.5 text-xs">
           NDIC-insured
         </Badge>

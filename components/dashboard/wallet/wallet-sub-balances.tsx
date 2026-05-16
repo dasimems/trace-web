@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react"
 import { motion } from "motion/react"
-import { Plus } from "lucide-react"
+import { Plus, RefreshCw } from "lucide-react"
 import { format } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
@@ -87,6 +87,17 @@ export function WalletSubBalances() {
               {pockets.length} pocket{pockets.length === 1 ? "" : "s"}
             </Badge>
           )}
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Refresh sub-balances"
+            title="Refresh sub-balances"
+            onClick={() => fetchPockets()}
+            disabled={isLoading}
+            className="text-text-3 hover:text-foreground"
+          >
+            <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+          </Button>
         </div>
         <Button variant="outline" size="sm" className="h-8 gap-1 rounded-full px-3 text-xs">
           <Plus />

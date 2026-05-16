@@ -4,6 +4,7 @@ import { useEffect, type ComponentType } from "react"
 import { useRouter } from "next/navigation"
 
 import { Spinner } from "@/components/ui/spinner"
+import { useUserHasHydrated } from "@/hooks/use-user-hydrated"
 import useUserStore, { type TUserDetails } from "@/stores/user-store"
 
 const DASHBOARD_PATH = "/app/overview"
@@ -18,15 +19,16 @@ export function withRedirectIfAuthed<P extends object>(
 ) {
   function RedirectIfAuthed(props: P) {
     const router = useRouter()
+    const hydrated = useUserHasHydrated()
     const userDetails = useUserStore((s) => s.userDetails)
     const isLoading = useUserStore((s) => s.isLoading)
 
     useEffect(() => {
-      if (isLoading || !userDetails) return
+      if (!hydrated || isLoading || !userDetails) return
       router.replace(resolveAuthedDestination(userDetails))
-    }, [isLoading, userDetails, router])
+    }, [hydrated, isLoading, userDetails, router])
 
-    if (isLoading) {
+    if (!hydrated || isLoading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
           <Spinner className="size-6 text-text-3" />

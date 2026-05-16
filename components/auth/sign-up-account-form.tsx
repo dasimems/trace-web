@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "motion/react"
 import { ArrowRight, Eye, EyeOff } from "lucide-react"
@@ -13,7 +14,6 @@ import Joi from "joi"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import { OAuthButtons } from "@/components/auth/oauth-buttons"
 import { getNextStep } from "@/components/auth/sign-up-steps"
 import { signUp } from "@/api/auth"
 import { constructErrorMessage } from "@/api/functions"
@@ -96,14 +96,6 @@ export function SignUpAccountForm() {
       noValidate
       className="max-w-2xl space-y-7"
     >
-      <OAuthButtons />
-
-      <div className="flex items-center gap-3 text-xs text-text-3">
-        <span className="h-px flex-1 bg-border" />
-        <span>or with email</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
       <div className="space-y-2">
         <FieldLabel htmlFor="email">Email</FieldLabel>
         <Input
@@ -210,6 +202,16 @@ export function SignUpAccountForm() {
           </a>
         </p>
       </div>
+
+      <p className="text-sm text-text-3">
+        Already have an account?{" "}
+        <Link
+          href="/auth/sign-in"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          Login
+        </Link>
+      </p>
     </motion.form>
   )
 }

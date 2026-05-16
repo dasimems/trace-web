@@ -1,6 +1,6 @@
 # TRACE WEB
 
-This document defines **how developers should work on this application**. It covers the **tools**, **rules**, and **development flow** to ensure consistency, quality, and scalability. Please read and understand thoroughly before starting any work.
+This document defines **what this application is** and **how developers should work on it**. It covers the **product**, **tools**, **rules**, and **development flow** to ensure consistency, quality, and scalability. Please read and understand thoroughly before starting any work.
 
 ---
 
@@ -20,6 +20,9 @@ This document defines **how developers should work on this application**. It cov
 
 ## Table of content
 
+- [What Trace does](./#what-trace-does)
+- [Feature surfaces & rules](./#feature-surfaces--rules)
+- [Cross-cutting rules](./#cross-cutting-rules)
 - [How to contribute](./#how-to-contribute)
 - [Tools & Libraries](./#tools--libraries)
 - [Architecture](./#architecture)
@@ -27,6 +30,93 @@ This document defines **how developers should work on this application**. It cov
 - [Project Infrastructure](./#project-infrastructure)
 - [Auth & API Bootstrap](./#auth--api-bootstrap)
 - [How to run the app](./#how-to-run)
+
+### What Trace does
+
+Trace is a **financial intelligence dashboard** for Nigerian creators and SMBs — a self-driving money product. The frontend in this repo talks to `trace-backend` (NestJS + Prisma + Postgres) and Anthropic's Claude API to deliver:
+
+- A composite **financial health score** derived from real bank/transaction behavior (not credit history)
+- A **weekly AI-generated summary**, **smart recommendations**, **risk & stability**, **recurring patterns**, and **anomaly** detection — all cached server-side and refreshed via a background job
+- A **Copilot chat** with multi-chat support, scoped to the user's live financial snapshot, that can call tools (lookup transactions, simulate loans/investments, list recommendations)
+- **Loans** gated by a tier (BRONZE → PLATINUM) derived from the same health score, with a live repayment simulator + affordability check
+- **Wallet** with bank balance, sub-balance pockets, virtual cards, and money-in/out trends
+- **Transactions** with category trends and a 7×24 spending heatmap
+- **Investments** and **Opportunities** with detail pages, simulators, and per-product personalized rationale
+
+The mental model: **the dashboard is the bank app. Copilot is the financial advisor sitting next to you. Loans and investments are surfaced based on what your money actually does.**
+
+### Feature surfaces & rules
+
+Each surface below maps to one route group under `app/app/`. The **Rule** lines call out feature-specific conventions on top of the cross-cutting rules.
+
+#### Overview — [`app/app/overview`](./app/app/overview)
+
+The "single glance" view: financial health card, weekly AI summary, smart recommendations, risk & stability, cash-flow chart, metric trend cards.
+
+- **Data source:** `/analysis/*` cached insight endpoints. The backend computes on a background job (`POST /analysis/refresh`); the GETs only read cache and return `{ status: "pending" }` when empty.
+- **Rule:** every card MUST handle three render states — **resolved data**, **empty / pending**, and **error**. Never let a card sit on a permanent skeleton — if the cache is `pending`, show a "no data yet" empty state instead.
+
+#### Wallet — [`app/app/wallet`](./app/app/wallet)
+
+Available balance, sub-balance pockets, money-in/out chart, send-to actions, virtual card preview, wallet activity table, and the Copilot summary card.
+
+- **Rule:** monetary amounts move through the API in **kobo (integer)** — never floats. Convert only at the edge using helpers in [`lib/money.ts`](./lib/money.ts) (`formatNairaWhole`, `formatNairaCompact`, `koboToNaira`). Inline `amount / 100` is a code-review block.
+
+#### Transactions — [`app/app/transactions`](./app/app/transactions)
+
+Recent activity table, category trend chart, spending heatmap, transaction metrics.
+
+- **Rule:** large lists/tables use TanStack Table in headless mode + Tailwind for styling. Keep filter/pagination state in URL search params where it makes sense so the view is shareable and refresh-safe.
+
+#### Loans — [`app/app/loans`](./app/app/loans)
+
+Tier ladder, "why you qualify" panel, repayment simulator (with live `/loans/affordability` calls + apply flow), repayment forecast.
+
+- **Apply flow lives in ONE place** — the simulator card. The top-of-page "Apply now" button must scroll to the simulator anchor (`REPAYMENT_SIMULATOR_ANCHOR_ID`) rather than opening a separate form.
+- **Rule:** the apply button is disabled by design when the user is not yet eligible. Always render the helper text ("Eligible after you reach SILVER tier.") next to a disabled apply button — never let the button be silently inert.
+
+#### Investments — [`app/app/investments`](./app/app/investments) + [`[id]`](./app/app/investments/[id])
+
+Portfolio card, safe-to-invest card, investment picks. Detail page has NAV chart, recent distributions, sector allocation, risk honest-read.
+
+- **Rule:** any Recharts component must wrap in `<ResponsiveContainer>` and gate render on the `useMounted()` hook ([`hooks/use-mounted.ts`](./hooks/use-mounted.ts)) to avoid SSR/CSR hydration mismatches.
+
+#### Opportunities — [`app/app/opportunities`](./app/app/opportunities) + [`[id]`](./app/app/opportunities/[id])
+
+Categorized income opportunities with filter pills. Detail page has affordability forecast, loan summary, documents & FAQ.
+
+- **Rule:** category filter pills derive from the data shape — do not hard-code category names in the component. New categories appear automatically when the backend adds them.
+
+#### Copilot — [`app/app/copilot`](./app/app/copilot)
+
+Multi-chat AI assistant scoped to the user's live financial snapshot. Backend supports chat CRUD + per-chat message CRUD; client surface lives in [`api/copilot.ts`](./api/copilot.ts).
+
+- **Rule:** message state lives in [`stores/copilot-store.ts`](./stores/copilot-store.ts) (Zustand). `clearCopilotMessages()` wipes ALL chats; `clearCopilotChatMessages(chatId)` wipes only that chat's messages but keeps the chat row. Pick the right one.
+- **Rule:** never re-implement the chat-render component per page — Copilot reuses one composer (`chat-composer.tsx`) wherever a conversation is needed.
+
+#### Sign-up — [`app/auth/sign-up/*`](./app/auth/sign-up)
+
+Multi-step onboarding: `account` → `profile` → `identity` → `bank` → `analysis`.
+
+- **Buffer state** between steps persists in [`stores/sign-up-buffer-store.ts`](./stores/sign-up-buffer-store.ts) (Zustand) so a refresh mid-flow doesn't blank the form.
+- **Rule:** never navigate to an earlier step by re-submitting — use the stepper's back affordance. On refresh, resume from the user's current step using `getStepIndex(...)` from [`components/auth/sign-up-steps.ts`](./components/auth/sign-up-steps.ts).
+
+### Cross-cutting rules
+
+These apply everywhere. They override anything a contributor might pick up from generic React/Next.js tutorials.
+
+- **Pages compose, components contain.** A `page.tsx` is mostly imports + JSX composition. Design, fetching, and state belong inside each feature component — not in the page.
+- **shadcn first.** Before building a new primitive, check [`components/ui/`](./components/ui). Only roll your own when nothing fits.
+- **Motion-only animations.** All interactive animation goes through `motion/react` — never raw CSS transitions.
+- **Zustand for client state, TanStack Query for server state.** Persist in `localStorage` (via the `persist` middleware) only when the state genuinely needs to survive refresh — `user-store` does, `wallet-store` does not.
+- **`useEndpoint` is the data-fetching contract.** Every GET goes through it ([`hooks/use-endpoint.ts`](./hooks/use-endpoint.ts)) so every card gets the same `{ data, isLoading, error, refetch }` shape.
+- **Kobo at the edges, naira at the surface.** The backend speaks kobo. Convert only when rendering to the user. Never do arithmetic in mixed units.
+- **Hooks vs plain functions:** anything that uses React state/effects/store hooks goes in `hooks/`. Pure helpers (no React, no DOM) go in `lib/`.
+- **Early returns + object dispatch.** Avoid long `if/else` chains; prefer object-lookup over `switch` for branching on a key.
+- **`Set` / `Map` over arrays** when you need uniqueness or keyed lookup. Arrays only when position, duplicates, or `null`/`undefined` matter.
+- **The token never lives on `axios.defaults`.** The request interceptor in [`api/index.ts`](./api/index.ts) reads the token from the Zustand user-store on every outgoing call. Do not bypass it.
+
+---
 
 ### How to contribute
 

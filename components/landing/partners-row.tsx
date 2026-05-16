@@ -5,10 +5,11 @@ import { ShieldCheck } from "lucide-react"
 
 const PARTNERS = [
   { label: "SQUAD API", weight: "font-semibold" },
-  { label: "Mono", weight: "font-medium italic" },
+  // { label: "Mono", weight: "font-medium italic" },
   { label: "NIBSS", weight: "font-semibold tracking-wide" },
-  { label: "Paystack", weight: "font-medium" },
-  { label: "Flutterwave", weight: "font-medium" },
+  { label: "GT.CO", weight: "font-semibold tracking-wide" },
+  // { label: "Paystack", weight: "font-medium" },
+  // { label: "Flutterwave", weight: "font-medium" },
 ] as const
 
 export function PartnersRow() {
@@ -34,7 +35,10 @@ export function PartnersRow() {
         </div>
         <div className="flex items-center gap-2 text-sm text-text-3">
           <ShieldCheck className="size-4" />
-          <span>Bank-grade encryption · Read-only access · Every transaction builds your Trace score</span>
+          <span>
+            Bank-grade encryption · Read-only access · Every transaction builds
+            your Trace score
+          </span>
         </div>
       </div>
     </motion.section>

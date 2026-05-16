@@ -6,11 +6,7 @@ import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TraceCard } from "@/components/landing/trace-card"
 
-function CornerBracket({
-  position,
-}: {
-  position: "tl" | "tr" | "bl" | "br"
-}) {
+function CornerBracket({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
   const placement = {
     tl: "top-3 left-3",
     tr: "top-3 right-3 rotate-90",
@@ -71,7 +67,7 @@ export function Hero() {
       />
 
       {/* decorative bracketed frame */}
-      <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-6 sm:px-6 sm:pb-16">
+      <div className="relative mx-auto max-w-7xl px-4 pt-6 pb-12 sm:px-6 sm:pb-16">
         <div className="relative">
           <CornerBracket position="tl" />
           <CornerBracket position="tr" />
@@ -94,10 +90,9 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.2, ease: "easeOut" }}
             >
-              <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-[78px]">
-                The financial  
-                <br />
-                {" "}
+              <h1 className="font-display text-4xl leading-[1.05] font-semibold tracking-[-0.02em] text-foreground sm:text-5xl md:text-6xl lg:text-[78px]">
+                The financial
+                <br />{" "}
                 <span className="relative inline-block text-lime-500">
                   Proof
                   <span
@@ -110,7 +105,9 @@ export function Hero() {
               </h1>
 
               <p className="mt-7 max-w-xl text-base leading-relaxed text-text-2 sm:text-lg">
-                Trace builds the financial proof that unlocks loans, investments and opportunities for 35 million Nigerian traders who transact daily but remain invisible to every financial institution. 
+                Trace builds the financial proof that unlocks loans, investments
+                and opportunities for 40 million Nigerian traders who transact
+                daily but remain invisible to every financial institution.
               </p>
 
               <div className="mt-9 flex flex-wrap items-center gap-5">

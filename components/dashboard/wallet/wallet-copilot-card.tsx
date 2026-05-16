@@ -86,9 +86,6 @@ function Resolved({ context }: { context: TCopilotContext }) {
         <Button size="lg" className="h-9 rounded-full px-4 shadow-primary">
           Talk to Copilot <ArrowRight />
         </Button>
-        <Button variant="outline" size="lg" className="h-9 rounded-full px-4">
-          See breakdown
-        </Button>
       </div>
     </>
   )

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   CreditCard,
   Plus,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   Zap,
@@ -70,7 +71,20 @@ export function AvailableBalanceCard() {
       className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-card"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="text-sm text-text-3">Available balance</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-sm text-text-3">Available balance</div>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Refresh wallet balance"
+            title="Refresh wallet balance"
+            onClick={() => fetchWallet()}
+            disabled={isLoading}
+            className="text-text-3 hover:text-foreground"
+          >
+            <RefreshCw className={isLoading ? "animate-spin" : undefined} />
+          </Button>
+        </div>
         {todayLabel && (
           <Badge
             variant={todayNet >= 0 ? "good" : "warn"}

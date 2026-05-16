@@ -1,4 +1,6 @@
 import { deleteData, getData, patchData, postData } from "@/api";
+import { TransactionCategory } from "@/lib/enum";
+import type { TTransaction } from "@/api/transactions";
 
 export type TWalletBalance = {
   available: number;
@@ -118,12 +120,22 @@ export type TTransferPayload = {
   accountName: string;
   amount: number;
   remark?: string;
+  // Optional. The backend infers a category from the recipient when omitted
+  // (e.g. Chowdeck → FOOD_AND_DINING) and falls back to TRANSFER.
+  category?: TransactionCategory;
 };
 
 export const initiateTransfer = async (payload: TTransferPayload) => {
-  const { data } = await postData<TTransferPayload, unknown>(
+  const { data } = await postData<TTransferPayload, TTransaction>(
     "/wallet/transfer",
     payload,
+  );
+  return data.data;
+};
+
+export const requeryTransfer = async (reference: string) => {
+  const { data } = await getData<TTransaction>(
+    `/wallet/transfer/${encodeURIComponent(reference)}`,
   );
   return data.data;
 };

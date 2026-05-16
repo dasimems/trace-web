@@ -26,7 +26,7 @@ export function TopMatchFeature({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="rounded-3xl border border-lime-300 bg-lime-50/40 p-5 dark:border-lime-500/40 dark:bg-lime-500/5 sm:p-7"
+      className="rounded-3xl border border-lime-300 bg-lime-50/40 p-5 sm:p-7 dark:border-lime-500/40 dark:bg-lime-500/5"
     >
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr] lg:gap-8">
         <div>
@@ -36,7 +36,7 @@ export function TopMatchFeature({
 
           {opportunity ? (
             <>
-              <h2 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+              <h2 className="mt-4 font-display text-2xl leading-tight font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
                 {opportunity.title}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-2">
@@ -51,12 +51,20 @@ export function TopMatchFeature({
               </div>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Button asChild size="lg" className="h-10 rounded-full px-5 shadow-primary">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-10 rounded-full px-5 shadow-primary"
+                >
                   <Link href={detailHref(opportunity)}>
                     View details <ArrowRight />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" className="h-10 rounded-full px-5">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-10 rounded-full px-5"
+                >
                   Compare
                 </Button>
               </div>
@@ -96,7 +104,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs text-text-3">{label}</div>
-      <div className="mt-1 font-display text-xl font-semibold tabular-nums tracking-tight text-foreground">
+      <div className="mt-1 font-display text-xl font-semibold tracking-tight text-foreground tabular-nums">
         {value}
       </div>
     </div>

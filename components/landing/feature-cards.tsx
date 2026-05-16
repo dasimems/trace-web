@@ -18,27 +18,27 @@ type Feature = {
 const FEATURES: Feature[] = [
   {
     icon: AlignLeft,
-    title: "Transaction intelligence",
+    title: "Real-time transaction intelligence",
     description:
-      "Every credit and debit is parsed, categorised and scored against your goals.",
+      "Every naira in and out builds your Trace Health Score automatically — no manual input required.",
   },
   {
     icon: Hash,
-    title: "Opportunity marketplace",
+    title: "AI-matched opportunity marketplace",
     description:
-      "Loans, grants and investments matched to your live cashflow profile.",
+      "Loans, grants and investments ranked by your actual cashflow — not your paperwork.",
   },
   {
     icon: Building2,
-    title: "Tiered loan engine",
+    title: "Behaviour-based loan tiers",
     description:
-      "Bronze to Platinum tiers unlock as your Trace health score climbs.",
+      "Bronze to Platinum — unlocked by how you transact, not who you know.",
   },
   {
     icon: MessageSquare,
     title: "Copilot chat",
     description:
-      "Ask anything — Trace explains spend, flags risks, drafts your next move.",
+      "Ask anything about your money. Trace explains your spending, flags risks, and tells you exactly what to do next.",
   },
 ]
 

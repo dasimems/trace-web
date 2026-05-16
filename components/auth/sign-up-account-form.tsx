@@ -72,7 +72,7 @@ export function SignUpAccountForm() {
     onError: (error) => {
       const message = constructErrorMessage(
         error as TApiErrorResponseType,
-        "Couldn't create your account. Please try again.",
+        "Couldn't create your account. Please try again."
       )
       toast.error(message)
     },
@@ -137,7 +137,7 @@ export function SignUpAccountForm() {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-text-3 hover:text-foreground"
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5 text-text-3 hover:text-foreground"
             >
               {showPassword ? (
                 <EyeOff className="size-4" />
@@ -147,7 +147,9 @@ export function SignUpAccountForm() {
             </button>
           </div>
           {errors.password ? (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
+            <p className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
           ) : (
             <p className="text-xs text-text-3">
               Mix upper, lower, a number and a special character.

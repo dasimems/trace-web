@@ -3,18 +3,21 @@
 import { useEffect } from "react"
 import { motion } from "motion/react"
 import { ArrowUpRight, CreditCard, Plus, Receipt } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatNaira, splitNairaParts } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
+import useWalletActionsStore from "@/stores/wallet-actions-store"
 
-const ACTIONS = [
-  { label: "Send",    icon: ArrowUpRight, primary: false },
-  { label: "Request", icon: Receipt,      primary: false },
-  { label: "Cards",   icon: CreditCard,   primary: false },
-] as const
+type Action = {
+  label: string
+  icon: LucideIcon
+  onClick?: () => void
+  disabled?: boolean
+}
 
 export function WalletBalanceCard() {
   const snapshot = useWalletStore((s) => s.snapshot)
@@ -22,10 +25,19 @@ export function WalletBalanceCard() {
   const fetchError = useWalletStore((s) => s.fetchError)
   const fetchWallet = useWalletStore((s) => s.fetchWallet)
   const hasFetched = useWalletStore((s) => s.hasFetched)
+  const openFund = useWalletActionsStore((s) => s.openFund)
+  const openSend = useWalletActionsStore((s) => s.openSend)
+  const openRequest = useWalletActionsStore((s) => s.openRequest)
 
   useEffect(() => {
     if (!hasFetched) fetchWallet()
   }, [hasFetched, fetchWallet])
+
+  const secondaryActions: ReadonlyArray<Action> = [
+    { label: "Send", icon: ArrowUpRight, onClick: () => openSend() },
+    { label: "Request", icon: Receipt, onClick: openRequest },
+    { label: "Cards", icon: CreditCard, disabled: true },
+  ]
 
   return (
     <motion.div
@@ -46,23 +58,33 @@ export function WalletBalanceCard() {
           available={snapshot.balance.available}
           ledger={snapshot.balance.ledger}
         />
-      ) : isLoading || !fetchError ? (
+      ) : isLoading ? (
         <BalanceSkeleton />
-      ) : (
+      ) : fetchError ? (
         <p className="mt-4 text-sm text-destructive">{fetchError}</p>
+      ) : (
+        <p className="mt-4 text-sm text-text-3">
+          We couldn&rsquo;t fetch your wallet yet.
+        </p>
       )}
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button size="lg" className="h-9 gap-1.5 rounded-full px-3.5 shadow-primary">
+        <Button
+          size="lg"
+          className="h-9 gap-1.5 rounded-full px-3.5 shadow-primary"
+          onClick={openFund}
+        >
           <Plus />
           Fund
         </Button>
-        {ACTIONS.map(({ label, icon: Icon }) => (
+        {secondaryActions.map(({ label, icon: Icon, onClick, disabled }) => (
           <Button
             key={label}
             variant="outline"
             size="lg"
             className="h-9 gap-1.5 rounded-full px-3.5"
+            onClick={onClick}
+            disabled={disabled}
           >
             <Icon />
             {label}

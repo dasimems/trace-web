@@ -18,21 +18,16 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatNaira, splitNairaParts } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
+import useWalletActionsStore from "@/stores/wallet-actions-store"
 
 type Action = {
   label: string
   icon: LucideIcon
   iconClassName?: string
   primary?: boolean
+  onClick?: () => void
+  disabled?: boolean
 }
-
-const ACTIONS: ReadonlyArray<Action> = [
-  { label: "Fund",        icon: Plus,       primary: true                                 },
-  { label: "Send",        icon: ArrowRight                                                },
-  { label: "Request",     icon: ArrowLeft                                                 },
-  { label: "Pay bill",    icon: Zap,        iconClassName: "text-warn-500 fill-warn-500" },
-  { label: "Buy airtime", icon: Smartphone                                                },
-]
 
 export function AvailableBalanceCard() {
   const snapshot = useWalletStore((s) => s.snapshot)
@@ -40,6 +35,9 @@ export function AvailableBalanceCard() {
   const error = useWalletStore((s) => s.fetchError)
   const hasFetched = useWalletStore((s) => s.hasFetched)
   const fetchWallet = useWalletStore((s) => s.fetchWallet)
+  const openFund = useWalletActionsStore((s) => s.openFund)
+  const openSend = useWalletActionsStore((s) => s.openSend)
+  const openRequest = useWalletActionsStore((s) => s.openRequest)
 
   useEffect(() => {
     if (!hasFetched) fetchWallet()
@@ -50,6 +48,19 @@ export function AvailableBalanceCard() {
   const todayLabel = balance
     ? `${todayNet >= 0 ? "+" : ""}${formatNaira(todayNet)} today`
     : null
+
+  const actions: ReadonlyArray<Action> = [
+    { label: "Fund", icon: Plus, primary: true, onClick: openFund },
+    { label: "Send", icon: ArrowRight, onClick: () => openSend() },
+    { label: "Request", icon: ArrowLeft, onClick: openRequest },
+    {
+      label: "Pay bill",
+      icon: Zap,
+      iconClassName: "text-warn-500 fill-warn-500",
+      disabled: true,
+    },
+    { label: "Buy airtime", icon: Smartphone, disabled: true },
+  ]
 
   return (
     <motion.div
@@ -76,16 +87,20 @@ export function AvailableBalanceCard() {
           ledger={balance.ledger}
           pending={balance.pending}
         />
-      ) : isLoading || !error ? (
+      ) : isLoading ? (
         <BalanceSkeleton />
-      ) : (
+      ) : error ? (
         <p className="mt-3 text-sm text-destructive">{error}</p>
+      ) : (
+        <p className="mt-3 text-sm text-text-3">
+          We couldn&rsquo;t fetch your wallet yet.
+        </p>
       )}
 
       <BalanceSparkline className="mt-3" />
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {ACTIONS.map((action) => (
+        {actions.map((action) => (
           <ActionPill key={action.label} action={action} />
         ))}
       </div>
@@ -93,6 +108,8 @@ export function AvailableBalanceCard() {
       <Button
         variant="outline"
         size="lg"
+        disabled
+        title="Cards aren't available yet"
         className="mt-2 h-9 w-fit gap-1.5 rounded-full px-3.5"
       >
         <CreditCard /> Cards
@@ -149,7 +166,12 @@ function ActionPill({ action }: { action: Action }) {
   const Icon = action.icon
   if (action.primary) {
     return (
-      <Button size="lg" className="h-9 gap-1.5 rounded-full px-3.5 shadow-primary">
+      <Button
+        size="lg"
+        className="h-9 gap-1.5 rounded-full px-3.5 shadow-primary"
+        onClick={action.onClick}
+        disabled={action.disabled}
+      >
         <Icon />
         {action.label}
       </Button>
@@ -160,6 +182,8 @@ function ActionPill({ action }: { action: Action }) {
       variant="outline"
       size="lg"
       className="h-9 gap-1.5 rounded-full px-3.5"
+      onClick={action.onClick}
+      disabled={action.disabled}
     >
       <Icon className={action.iconClassName} />
       {action.label}

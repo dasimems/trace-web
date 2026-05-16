@@ -73,6 +73,19 @@ export enum LoanRepaymentStatus {
   PAID = "PAID"
 }
 
+export enum PaymentRequestKind {
+  FUND = "FUND",
+  REQUEST = "REQUEST"
+}
+
+export enum PaymentRequestStatus {
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  EXPIRED = "EXPIRED",
+  CANCELLED = "CANCELLED"
+}
+
 export enum InvestmentProductType {
   MONEY_MARKET = "MONEY_MARKET",
   TREASURY_BILL = "TREASURY_BILL",

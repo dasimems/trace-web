@@ -17,6 +17,10 @@ const NAIRA_NO_DECIMALS_FORMATTER = new Intl.NumberFormat("en-NG", {
 
 export const koboToNaira = (kobo: number) => kobo / 100
 
+// Convert a user-entered naira amount back to integer kobo. Rounds to handle
+// the floating-point junk that 1.23 -> 123 sometimes runs into.
+export const nairaToKobo = (naira: number) => Math.round(naira * 100)
+
 export const formatNaira = (kobo: number) =>
   NAIRA_FORMATTER.format(koboToNaira(kobo))
 

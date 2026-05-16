@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getRecentRecipients, type TRecentRecipient } from "@/api/wallet"
+import useWalletActionsStore from "@/stores/wallet-actions-store"
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -29,6 +30,7 @@ export function SendToCard() {
     getRecentRecipients,
   )
   const recents = data ?? []
+  const openSend = useWalletActionsStore((s) => s.openSend)
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -86,6 +88,7 @@ export function SendToCard() {
                 variant="outline"
                 size="sm"
                 className="h-8 rounded-full px-3.5 text-xs"
+                onClick={() => openSend(recent)}
               >
                 Send
               </Button>

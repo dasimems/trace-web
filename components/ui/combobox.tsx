@@ -93,21 +93,28 @@ function ComboboxContent({
   align = "start",
   alignOffset = 0,
   anchor,
+  container,
   ...props
 }: ComboboxPrimitive.Popup.Props &
   Pick<
     ComboboxPrimitive.Positioner.Props,
     "side" | "align" | "sideOffset" | "alignOffset" | "anchor"
-  >) {
+  > & {
+    // When rendered inside another portal (Sheet / Dialog), pass a ref to that
+    // container so the dropdown becomes a DOM descendant of the dialog tree.
+    // Otherwise Radix Dialog's outside-click detection swallows clicks on the
+    // combobox items.
+    container?: React.RefObject<HTMLElement | null> | HTMLElement | null
+  }) {
   return (
-    <ComboboxPrimitive.Portal>
+    <ComboboxPrimitive.Portal container={container}>
       <ComboboxPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}
         align={align}
         alignOffset={alignOffset}
         anchor={anchor}
-        className="isolate z-50"
+        className="isolate z-[60] pointer-events-auto"
       >
         <ComboboxPrimitive.Popup
           data-slot="combobox-content"

@@ -1,5 +1,9 @@
 import { deleteData, getData, patchData, postData } from "@/api";
-import { TransactionCategory } from "@/lib/enum";
+import {
+  PaymentRequestKind,
+  PaymentRequestStatus,
+  TransactionCategory,
+} from "@/lib/enum";
 import type { TTransaction } from "@/api/transactions";
 
 export type TWalletBalance = {
@@ -138,6 +142,122 @@ export const requeryTransfer = async (reference: string) => {
     `/wallet/transfer/${encodeURIComponent(reference)}`,
   );
   return data.data;
+};
+
+// ─── Banks ─────────────────────────────────────────────────────────────────
+
+export type TBank = {
+  code: string;
+  name: string;
+};
+
+export const getBanks = async () => {
+  const { data } = await getData<TBank[]>("/wallet/banks");
+  return data.data;
+};
+
+// ─── Fund (self top-up via Squad checkout) ─────────────────────────────────
+
+export type TFundAccountPayload = {
+  amount: number;
+  callbackUrl?: string;
+};
+
+export type TFundAccountResponse = {
+  checkoutUrl: string;
+  reference: string;
+  amount: number;
+  currency: string;
+};
+
+export const initiateFundAccount = async (payload: TFundAccountPayload) => {
+  const { data } = await postData<TFundAccountPayload, TFundAccountResponse>(
+    "/wallet/fund",
+    payload,
+  );
+  return data.data;
+};
+
+export const verifyFundAccount = async (reference: string) => {
+  const { data } = await getData<TTransaction>(
+    `/wallet/fund/${encodeURIComponent(reference)}`,
+  );
+  return data.data;
+};
+
+// ─── Payment requests (shareable FUND + REQUEST links) ─────────────────────
+
+export type TPaymentRequest = {
+  id: string;
+  reference: string;
+  gatewayRef?: string;
+  kind: PaymentRequestKind;
+  amount: number;
+  currency: string;
+  status: PaymentRequestStatus;
+  description?: string;
+  checkoutUrl: string;
+  callbackUrl?: string;
+  paymentType?: string;
+  paidByEmail?: string;
+  paidByName?: string;
+  paidAt?: string;
+  expiresAt?: string;
+  transactionId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TCreatePaymentRequestPayload = {
+  amount: number;
+  description?: string;
+  callbackUrl?: string;
+  expiresAt?: string;
+};
+
+export const createPaymentRequest = async (
+  payload: TCreatePaymentRequestPayload,
+) => {
+  const { data } = await postData<TCreatePaymentRequestPayload, TPaymentRequest>(
+    "/wallet/payment-requests",
+    payload,
+  );
+  return data.data;
+};
+
+export type TListPaymentRequestsQuery = {
+  kind?: PaymentRequestKind;
+  status?: PaymentRequestStatus;
+  page?: number;
+  limit?: number;
+};
+
+export const getPaymentRequests = async (query?: TListPaymentRequestsQuery) => {
+  const { data } = await getData<TPaymentRequest[]>("/wallet/payment-requests", {
+    params: query,
+  });
+  return { items: data.data, pagination: data.pagination };
+};
+
+export const getPaymentRequest = async (reference: string) => {
+  const { data } = await getData<TPaymentRequest>(
+    `/wallet/payment-requests/${encodeURIComponent(reference)}`,
+  );
+  return data.data;
+};
+
+export const reverifyPaymentRequest = async (reference: string) => {
+  const { data } = await getData<TPaymentRequest>(
+    `/wallet/payment-requests/${encodeURIComponent(reference)}/reverify`,
+  );
+  return data.data;
+};
+
+export const cancelPaymentRequest = async (reference: string) => {
+  const { data } = await deleteData<TPaymentRequest>(
+    `/wallet/payment-requests/${encodeURIComponent(reference)}`,
+  );
+  return data?.data;
 };
 
 export type TVirtualCard = {

@@ -26,6 +26,16 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// URLs whose 401s are handled by their own callers (bootstrap, auth flow) and
+// must not trip the global "session expired" cleanup — otherwise refresh-time
+// revalidation would wipe a freshly-rehydrated token before the bootstrap
+// gets a chance to interpret the failure.
+const SKIP_401_LOGOUT_URLS = new Set([
+  "/auth/sign-in",
+  "/auth/sign-up",
+  "/auth/me",
+])
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -34,8 +44,7 @@ api.interceptors.response.use(
     const userDetails = useUserStore.getState().userDetails
     if (
       status === 401 &&
-      url !== "/auth/sign-in" &&
-      url !== "/auth/sign-up" &&
+      (!url || !SKIP_401_LOGOUT_URLS.has(url)) &&
       userDetails !== null
     ) {
       getResetUserDetails()()

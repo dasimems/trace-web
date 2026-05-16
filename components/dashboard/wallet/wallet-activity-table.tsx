@@ -4,6 +4,7 @@ import { ChevronDown, Download, MoreHorizontal } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -13,101 +14,90 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getTransactions, type TTransaction } from "@/api/transactions"
+import { formatNaira } from "@/lib/money"
+import { formatSmartDate } from "@/lib/functions"
+import {
+  TransactionCategory,
+  TransactionDirection,
+  TransactionStatus,
+} from "@/lib/enum"
 
-type TypeTone = "lime" | "info" | "purple" | "warn" | "muted"
+type TypeTone = "lime" | "info" | "purple" | "warn" | "muted" | "bad"
 
-type Activity = {
-  initials: string
-  description: string
-  caption: string
-  type: { label: string; tone: TypeTone }
-  reference: string
-  date: string
-  amount: number
+type TypeMeta = {
+  label: string
+  tone: TypeTone
 }
 
-const ACTIVITIES: ReadonlyArray<Activity> = [
-  {
-    initials: "BF",
-    description: "Salary · Balogun Fabrics",
-    caption: "NIP transfer · GTBank",
-    type: { label: "Income", tone: "lime" },
-    reference: "TR-889423",
-    date: "Today · 9:01am",
-    amount: 340_000,
-  },
-  {
-    initials: "GT",
-    description: "Funded from GTBank ****4112",
-    caption: "NIP inbound · TraceID #58241",
-    type: { label: "Top-up", tone: "info" },
-    reference: "TR-889424",
-    date: "Today · 8:14am",
-    amount: 80_000,
-  },
-  {
-    initials: "AD",
-    description: "Transfer · Adaobi Ifeanyi",
-    caption: "Opay · 8138 ··· 21",
-    type: { label: "Transfer", tone: "muted" },
-    reference: "TR-889425",
-    date: "Yesterday · 4:32pm",
-    amount: -15_000,
-  },
-  {
-    initials: "C",
-    description: "Move to Save",
-    caption: "Spend → Save · auto-rule",
-    type: { label: "Internal", tone: "purple" },
-    reference: "TR-889426",
-    date: "Yesterday · 9:00am",
-    amount: -25_000,
-  },
-  {
-    initials: "PS",
-    description: "POS settlement · Apapa",
-    caption: "Squad merchant · 12 txns",
-    type: { label: "Income", tone: "lime" },
-    reference: "TR-889427",
-    date: "8 May · 6:30pm",
-    amount: 68_500,
-  },
-  {
-    initials: "IK",
-    description: "IKEDC bill",
-    caption: "Recurring · monthly",
-    type: { label: "Bills", tone: "warn" },
-    reference: "TR-889428",
-    date: "8 May · 2:11pm",
-    amount: -18_400,
-  },
-  {
-    initials: "SP",
-    description: "Virtual card · Spotify",
-    caption: "Card · *7821",
-    type: { label: "Bills", tone: "warn" },
-    reference: "TR-889429",
-    date: "6 May · 12:00am",
-    amount: -1_300,
-  },
-  {
-    initials: "MS",
-    description: "Move to Goals · Store",
-    caption: "Spend → Goals · Lagos store",
-    type: { label: "Internal", tone: "purple" },
-    reference: "TR-889430",
-    date: "5 May · 10:00am",
-    amount: -10_000,
-  },
-]
+const TYPE_META_BY_CATEGORY: Partial<Record<TransactionCategory, TypeMeta>> = {
+  [TransactionCategory.INCOME]: { label: "Income", tone: "lime" },
+  [TransactionCategory.TRANSFER]: { label: "Transfer", tone: "muted" },
+  [TransactionCategory.BILLS_AND_UTILITIES]: { label: "Bills", tone: "warn" },
+  [TransactionCategory.FOOD_AND_DINING]: { label: "Food", tone: "warn" },
+  [TransactionCategory.TRANSPORT]: { label: "Transport", tone: "info" },
+  [TransactionCategory.SHOPPING]: { label: "Shopping", tone: "purple" },
+  [TransactionCategory.ENTERTAINMENT]: { label: "Lifestyle", tone: "purple" },
+  [TransactionCategory.SAVINGS]: { label: "Save", tone: "info" },
+  [TransactionCategory.INVESTMENT]: { label: "Invest", tone: "info" },
+  [TransactionCategory.FEES]: { label: "Fees", tone: "muted" },
+  [TransactionCategory.HEALTH]: { label: "Health", tone: "good" as TypeTone },
+  [TransactionCategory.EDUCATION]: { label: "Education", tone: "info" },
+  [TransactionCategory.OTHER]: { label: "Other", tone: "muted" },
+}
 
-function formatAmount(amount: number): string {
-  const sign = amount >= 0 ? "+" : "-"
-  const abs = Math.abs(amount).toLocaleString()
-  return `${sign}₦${abs}`
+function typeMetaFor(t: TTransaction): TypeMeta {
+  return (
+    TYPE_META_BY_CATEGORY[t.category] ?? { label: t.category, tone: "muted" }
+  )
+}
+
+function initialsFor(t: TTransaction): string {
+  const name =
+    t.direction === TransactionDirection.CREDIT
+      ? t.senderName
+      : t.recipientName
+  const source = name?.trim() || t.description?.trim() || t.reference
+  const parts = source.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+}
+
+function descriptionFor(t: TTransaction): string {
+  if (t.description) return t.description
+  const counter =
+    t.direction === TransactionDirection.CREDIT
+      ? t.senderName
+      : t.recipientName
+  if (counter) {
+    return `${t.direction === TransactionDirection.CREDIT ? "From" : "To"} ${counter}`
+  }
+  return typeMetaFor(t).label
+}
+
+function captionFor(t: TTransaction): string {
+  if (t.direction === TransactionDirection.CREDIT && t.senderBankName) {
+    return `${t.senderBankName} · ${t.senderAccountNumber ?? ""}`
+  }
+  if (t.direction === TransactionDirection.DEBIT && t.recipientBankName) {
+    return `${t.recipientBankName} · ${t.recipientAccountNumber ?? ""}`
+  }
+  return t.status === TransactionStatus.PENDING ? "Pending settlement" : ""
+}
+
+function signedAmount(t: TTransaction): number {
+  return t.direction === TransactionDirection.CREDIT ? t.amount : -t.amount
 }
 
 export function WalletActivityTable() {
+  const { data, isLoading, error } = useEndpoint(
+    "/transactions?wallet=true",
+    () => getTransactions({ limit: 8 }),
+  )
+
+  const transactions = data?.items ?? []
+
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -115,7 +105,7 @@ export function WalletActivityTable() {
           Wallet activity
         </h3>
         <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
-          This week
+          Latest
         </Badge>
         <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
           <Button variant="outline" size="sm" className="h-8 gap-1 rounded-full px-3 text-xs">
@@ -129,75 +119,87 @@ export function WalletActivityTable() {
 
       <div className="mt-4 -mx-4 overflow-x-auto sm:-mx-5">
         <div className="min-w-[640px] px-4 sm:px-5">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                DESCRIPTION
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                TYPE
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                REFERENCE
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                DATE
-              </TableHead>
-              <TableHead className="text-right font-mono text-[11px] tracking-[0.16em] text-text-3">
-                AMOUNT
-              </TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ACTIVITIES.map((activity) => (
-              <ActivityRow key={activity.reference} activity={activity} />
-            ))}
-          </TableBody>
-        </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  DESCRIPTION
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  TYPE
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  REFERENCE
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  DATE
+                </TableHead>
+                <TableHead className="text-right font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  AMOUNT
+                </TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && transactions.length === 0 ? (
+                <ActivitySkeletonRows />
+              ) : transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-text-3">
+                    {error ?? "No activity yet."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                transactions.map((t) => (
+                  <ActivityRow key={t.id} t={t} />
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
   )
 }
 
-function ActivityRow({ activity }: { activity: Activity }) {
+function ActivityRow({ t }: { t: TTransaction }) {
+  const meta = typeMetaFor(t)
+  const amount = signedAmount(t)
+  const formatted = `${amount >= 0 ? "+" : "-"}${formatNaira(Math.abs(amount))}`
   return (
     <TableRow>
       <TableCell>
         <div className="flex items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-semibold text-text-2">
-            {activity.initials}
+            {initialsFor(t)}
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-foreground">
-              {activity.description}
+              {descriptionFor(t)}
             </div>
-            <div className="truncate text-xs text-text-3">
-              {activity.caption}
-            </div>
+            <div className="truncate text-xs text-text-3">{captionFor(t)}</div>
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant={activity.type.tone === "muted" ? "outline" : activity.type.tone} className="h-6 px-2.5 text-[11px]">
-          {activity.type.label}
+        <Badge
+          variant={meta.tone === "muted" ? "outline" : meta.tone}
+          className="h-6 px-2.5 text-[11px]"
+        >
+          {meta.label}
         </Badge>
       </TableCell>
-      <TableCell className="font-mono text-xs text-text-3">
-        {activity.reference}
+      <TableCell className="font-mono text-xs text-text-3">{t.reference}</TableCell>
+      <TableCell className="text-sm text-text-2">
+        {formatSmartDate(new Date(t.processedAt ?? t.createdAt))}
       </TableCell>
-      <TableCell className="text-sm text-text-2">{activity.date}</TableCell>
       <TableCell
         className={cn(
           "text-right font-display text-sm font-semibold tabular-nums",
-          activity.amount > 0
-            ? "text-lime-600 dark:text-lime-400"
-            : "text-foreground",
+          amount > 0 ? "text-lime-600 dark:text-lime-400" : "text-foreground",
         )}
       >
-        {formatAmount(activity.amount)}
+        {formatted}
       </TableCell>
       <TableCell>
         <Button
@@ -210,5 +212,38 @@ function ActivityRow({ activity }: { activity: Activity }) {
         </Button>
       </TableCell>
     </TableRow>
+  )
+}
+
+function ActivitySkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <TableRow key={i}>
+          <TableCell>
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-9 rounded-full" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-6 w-16" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-3 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-3 w-24" />
+          </TableCell>
+          <TableCell className="text-right">
+            <Skeleton className="ml-auto h-4 w-20" />
+          </TableCell>
+          <TableCell />
+        </TableRow>
+      ))}
+    </>
   )
 }

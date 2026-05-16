@@ -1,28 +1,36 @@
 "use client"
 
+import { memo } from "react"
 import Link from "next/link"
 import { motion } from "motion/react"
 import { ArrowRight, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { formatNairaCompact } from "@/lib/money"
+import type { TInvestmentProduct } from "@/api/investments"
 
-export type InvestmentPick = {
-  id: string
-  type: string
-  title: string
-  description: string
-  return: string
-  risk: string
-  /** Confidence percent — used for the score in the corner. */
-  confidence: number
+function humanize(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export function InvestmentPickCard({
-  pick,
+function returnLabel(p: TInvestmentProduct): string {
+  return `${(p.expectedReturnBps / 100).toFixed(1)}% p.a.`
+}
+
+function tenorLabel(p: TInvestmentProduct): string {
+  if (!p.tenorDays) return "Flexible"
+  return `${p.tenorDays} days`
+}
+
+function InvestmentPickCardBase({
+  product,
   index,
 }: {
-  pick: InvestmentPick
+  product: TInvestmentProduct
   index: number
 }) {
   return (
@@ -36,28 +44,28 @@ export function InvestmentPickCard({
     >
       <div className="flex items-start justify-between gap-3">
         <span className="inline-flex h-7 items-center rounded-md border border-info-200 bg-info-50 px-2.5 text-xs font-medium text-info-700 dark:border-info-500/30 dark:bg-info-500/15 dark:text-info-300">
-          {pick.type}
+          {humanize(product.type)}
         </span>
         <span className="inline-flex items-center gap-1 font-mono text-xs text-text-2">
           <Sparkles className="size-3.5 text-lime-500" />
-          <span className="font-semibold tabular-nums text-lime-600 dark:text-lime-400">
-            {pick.confidence}
-          </span>
-          % confidence
+          {humanize(product.riskLevel)}
         </span>
       </div>
 
       <h3 className="mt-4 font-display text-base font-semibold leading-snug text-foreground">
-        {pick.title}
+        {product.name}
       </h3>
-      <p className="mt-1 text-sm text-text-2">{pick.description}</p>
+      <p className="mt-1 text-sm text-text-2">
+        {product.aiRationale ?? product.description}
+      </p>
 
       <PickSparkline className="mt-4" />
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
         <div className="flex gap-6">
-          <Stat label="Return" value={pick.return} />
-          <Stat label="Risk"   value={pick.risk}   />
+          <Stat label="Return" value={returnLabel(product)} />
+          <Stat label="Min" value={formatNairaCompact(product.minAmount)} />
+          <Stat label="Tenor" value={tenorLabel(product)} />
         </div>
         <Button
           asChild
@@ -65,7 +73,7 @@ export function InvestmentPickCard({
           size="sm"
           className="h-8 gap-1 rounded-full px-3 text-xs"
         >
-          <Link href={`/app/investments/${pick.id}`}>
+          <Link href={`/app/investments/${product.id}`}>
             Allocate <ArrowRight />
           </Link>
         </Button>
@@ -78,7 +86,11 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-[11px] text-text-3">{label}</div>
-      <div className={cn("mt-0.5 font-display text-sm font-semibold tabular-nums text-foreground")}>
+      <div
+        className={cn(
+          "mt-0.5 font-display text-sm font-semibold tabular-nums text-foreground",
+        )}
+      >
         {value}
       </div>
     </div>
@@ -118,3 +130,5 @@ function PickSparkline({ className }: { className?: string }) {
     </svg>
   )
 }
+
+export const InvestmentPickCard = memo(InvestmentPickCardBase)

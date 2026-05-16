@@ -1,49 +1,73 @@
 "use client"
 
 import Link from "next/link"
+import { memo, useState } from "react"
 import { motion } from "motion/react"
-import { ArrowRight, Check, Sparkles } from "lucide-react"
+import { ArrowRight, Bookmark, Check, Sparkles } from "lucide-react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { OpportunitySource } from "@/lib/enum"
+import {
+  saveOpportunity,
+  unsaveOpportunity,
+  type TOpportunity,
+} from "@/api/opportunities"
+import { constructErrorMessage } from "@/api/functions"
 
-type OpportunityType = "Investment" | "Grant" | "Loan" | "Partnership"
-type Tone = "info" | "good" | "lime" | "warn" | "purple"
+type Tone = "info" | "good" | "lime" | "warn"
 
-const TYPE_TONE: Record<OpportunityType, Tone> = {
-  Investment:  "info",
-  Grant:       "good",
-  Loan:        "lime",
-  Partnership: "warn",
+const TYPE_TONE: Record<OpportunitySource, Tone> = {
+  [OpportunitySource.INVESTMENT]: "info",
+  [OpportunitySource.GRANT]: "good",
+  [OpportunitySource.LOAN]: "lime",
 }
 
 const TYPE_BADGE: Record<Tone, string> = {
-  info:   "bg-info-50 text-info-700 border-info-200 dark:bg-info-500/15 dark:text-info-300 dark:border-info-500/30",
-  good:   "bg-good-50 text-good-700 border-good-200 dark:bg-good-500/15 dark:text-good-300 dark:border-good-500/30",
-  lime:   "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-500/15 dark:text-lime-300 dark:border-lime-500/30",
-  warn:   "bg-warn-50 text-warn-700 border-warn-200 dark:bg-warn-500/15 dark:text-warn-300 dark:border-warn-500/30",
-  purple: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
+  info: "bg-info-50 text-info-700 border-info-200 dark:bg-info-500/15 dark:text-info-300 dark:border-info-500/30",
+  good: "bg-good-50 text-good-700 border-good-200 dark:bg-good-500/15 dark:text-good-300 dark:border-good-500/30",
+  lime: "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-500/15 dark:text-lime-300 dark:border-lime-500/30",
+  warn: "bg-warn-50 text-warn-700 border-warn-200 dark:bg-warn-500/15 dark:text-warn-300 dark:border-warn-500/30",
 }
 
-export type Opportunity = {
-  id: string
-  type: OpportunityType
-  matchPercent: number
-  title: string
-  description: string
-  stats: { return: string; risk: string; min: string; tenor: string }
-  provider: { initials: string; name: string; verified: boolean }
+function detailHref(opp: TOpportunity): string {
+  return `/app/opportunities/${encodeURIComponent(opp.id)}`
 }
 
-export function OpportunityCard({
+function OpportunityCardBase({
   opportunity,
   index,
 }: {
-  opportunity: Opportunity
+  opportunity: TOpportunity
   index: number
 }) {
-  const tone = TYPE_TONE[opportunity.type]
+  const tone = TYPE_TONE[opportunity.source]
+  const [saved, setSaved] = useState(opportunity.isSaved)
+  const [savingPending, setSavingPending] = useState(false)
+
+  async function toggleSave() {
+    if (savingPending) return
+    setSavingPending(true)
+    try {
+      if (saved) {
+        await unsaveOpportunity(opportunity.source, opportunity.id)
+      } else {
+        await saveOpportunity(opportunity.source, opportunity.id)
+      }
+      setSaved((v) => !v)
+    } catch (error) {
+      const message = constructErrorMessage(
+        error as TApiErrorResponseType,
+        "Couldn't update your saved list.",
+      )
+      toast.error(message)
+    } finally {
+      setSavingPending(false)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -62,25 +86,41 @@ export function OpportunityCard({
         >
           {opportunity.type}
         </span>
-        <span className="inline-flex items-center gap-1 font-mono text-xs text-text-2">
-          <Sparkles className="size-3.5 text-lime-500" />
-          <span className="text-lime-600 dark:text-lime-400 font-semibold tabular-nums">
-            {opportunity.matchPercent}
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 font-mono text-xs text-text-2">
+            <Sparkles className="size-3.5 text-lime-500" />
+            <span className="text-lime-600 dark:text-lime-400 font-semibold tabular-nums">
+              {opportunity.matchPercent}
+            </span>
+            % match
           </span>
-          % match
-        </span>
+          <button
+            type="button"
+            onClick={toggleSave}
+            aria-label={saved ? "Unsave" : "Save"}
+            disabled={savingPending}
+            className={cn(
+              "rounded-full p-1.5 text-text-3 transition-colors hover:text-foreground disabled:opacity-50",
+              saved && "text-lime-600 dark:text-lime-400",
+            )}
+          >
+            <Bookmark className={cn("size-4", saved && "fill-current")} />
+          </button>
+        </div>
       </div>
 
       <h3 className="mt-4 font-display text-lg font-semibold leading-snug text-foreground">
         {opportunity.title}
       </h3>
-      <p className="mt-1 text-sm text-text-2">{opportunity.description}</p>
+      <p className="mt-1 text-sm text-text-2">
+        {opportunity.aiRationale ?? opportunity.description}
+      </p>
 
       <div className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
-        <StatColumn label="Return" value={opportunity.stats.return} />
-        <StatColumn label="Risk"   value={opportunity.stats.risk} />
-        <StatColumn label="Min"    value={opportunity.stats.min} />
-        <StatColumn label="Tenor"  value={opportunity.stats.tenor} />
+        <StatColumn label="Return" value={opportunity.stats.return ?? "—"} />
+        <StatColumn label="Risk" value={opportunity.stats.risk ?? "—"} />
+        <StatColumn label="Min" value={opportunity.stats.min ?? "—"} />
+        <StatColumn label="Tenor" value={opportunity.stats.tenor ?? "—"} />
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -104,7 +144,7 @@ export function OpportunityCard({
           size="sm"
           className="h-8 gap-1 rounded-full px-3 text-xs"
         >
-          <Link href={`/app/opportunities/${opportunity.id}`}>
+          <Link href={detailHref(opportunity)}>
             View <ArrowRight />
           </Link>
         </Button>
@@ -123,3 +163,5 @@ function StatColumn({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
+
+export const OpportunityCard = memo(OpportunityCardBase)

@@ -2,8 +2,11 @@
 
 import { motion } from "motion/react"
 import { Copy, Share2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { LogoMark } from "@/components/landing/logo-mark"
+import { Skeleton } from "@/components/ui/skeleton"
+import useUserStore from "@/stores/user-store"
 
 function formatAccountNumber(raw: string): { head: string; tail: string } {
   const digits = raw.replace(/\D/g, "").padEnd(10, "0").slice(0, 10)
@@ -12,7 +15,18 @@ function formatAccountNumber(raw: string): { head: string; tail: string } {
 }
 
 export function OverviewBankCard() {
-  const { head, tail } = formatAccountNumber("8024567192")
+  const account = useUserStore((s) => s.userDetails?.bankAccounts?.[0])
+
+  async function handleCopy() {
+    if (!account) return
+    try {
+      await navigator.clipboard.writeText(account.accountNumber)
+      toast.success("Account number copied")
+    } catch {
+      toast.error("Couldn't copy account number")
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -41,7 +55,7 @@ export function OverviewBankCard() {
           </span>
         </div>
         <span className="font-mono text-[11px] tracking-[0.16em] text-neutral-400">
-          Squad / GTCO · 058
+          Squad / GTCO · {account?.bankCode ?? "···"}
         </span>
       </div>
 
@@ -49,36 +63,62 @@ export function OverviewBankCard() {
         <div className="font-mono text-[11px] tracking-[0.16em] text-neutral-400">
           ACCOUNT NUMBER
         </div>
-        <div className="mt-2 font-display text-3xl font-semibold tabular-nums tracking-widest text-white sm:text-[44px]">
-          {head}
-          <span className="text-lime-500">{tail}</span>
-        </div>
+        {account ? (
+          <AccountNumber raw={account.accountNumber} />
+        ) : (
+          <Skeleton className="mt-2 h-10 w-3/4 bg-white/10" />
+        )}
       </div>
 
       <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
         <div className="font-mono text-[11px] tracking-[0.16em] text-neutral-300">
-          ADAEZE OKAFOR
+          {account?.accountName?.toUpperCase() ?? "—"}
         </div>
         <div className="flex items-center gap-2">
-          <CardActionButton icon={<Copy className="size-3.5" />} label="Copy" />
-          <CardActionButton icon={<Share2 className="size-3.5" />} label="Share" />
+          <CardActionButton
+            icon={<Copy className="size-3.5" />}
+            label="Copy"
+            onClick={handleCopy}
+            disabled={!account}
+          />
+          <CardActionButton
+            icon={<Share2 className="size-3.5" />}
+            label="Share"
+            disabled
+          />
         </div>
       </div>
     </motion.div>
   )
 }
 
+function AccountNumber({ raw }: { raw: string }) {
+  const { head, tail } = formatAccountNumber(raw)
+  return (
+    <div className="mt-2 font-display text-3xl font-semibold tabular-nums tracking-widest text-white sm:text-[44px]">
+      {head}
+      <span className="text-lime-500">{tail}</span>
+    </div>
+  )
+}
+
 function CardActionButton({
   icon,
   label,
+  onClick,
+  disabled,
 }: {
   icon: React.ReactNode
   label: string
+  onClick?: () => void
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
-      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/15"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-medium text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {icon}
       {label}

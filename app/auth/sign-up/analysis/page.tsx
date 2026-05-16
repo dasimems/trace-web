@@ -1,3 +1,8 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+
 import { AuthShell } from "@/components/auth/auth-shell"
 import {
   AnalysisChecklist,
@@ -9,43 +14,50 @@ import {
 } from "@/components/auth/analysis-rail"
 import { ProgressStrip } from "@/components/auth/progress-strip"
 import { SignUpStepper } from "@/components/auth/sign-up-stepper"
-import { SIGN_UP_STEPS, getStepIndex } from "@/components/auth/sign-up-steps"
+import {
+  SIGN_UP_STEPS,
+  getNextStep,
+  getStepIndex,
+} from "@/components/auth/sign-up-steps"
 
-const ANALYSIS_STEPS: ReadonlyArray<AnalysisStep> = [
-  {
-    title: "Pulling 6 months of GTBank transactions",
-    detail: "4,217 records",
-    status: "done",
-  },
-  {
-    title: "Auto-categorizing merchants & expenses",
-    detail: "38 categories",
-    status: "done",
-  },
-  {
-    title: "Detecting recurring income & subscriptions",
-    detail: "7 recurring patterns",
-    status: "done",
-  },
-  {
-    title: "Building cash-flow & savings model",
-    detail: "modeling 12 weeks ahead…",
-    status: "active",
-  },
-  {
-    title: "Calibrating financial health score",
-    detail: "",
-    status: "todo",
-  },
-  {
-    title: "Matching opportunities to your profile",
-    detail: "",
-    status: "todo",
-  },
-]
+const STEP_LABELS: ReadonlyArray<{ title: string; detail: string }> = [
+  { title: "Pulling 6 months of GTBank transactions", detail: "4,217 records" },
+  { title: "Auto-categorizing merchants & expenses", detail: "38 categories" },
+  { title: "Detecting recurring income & subscriptions", detail: "7 recurring patterns" },
+  { title: "Building cash-flow & savings model", detail: "modeling 12 weeks ahead" },
+  { title: "Calibrating financial health score", detail: "" },
+  { title: "Matching opportunities to your profile", detail: "" },
+] as const
+
+const STEP_INTERVAL_MS = 950
 
 export default function SignUpAnalysisPage() {
+  const router = useRouter()
   const current = getStepIndex("analysis") + 1
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  useEffect(() => {
+    if (activeIndex >= STEP_LABELS.length) {
+      const next = getNextStep("analysis")
+      if (next) {
+        const id = setTimeout(() => router.replace(next.path), 600)
+        return () => clearTimeout(id)
+      }
+      return
+    }
+    const id = setTimeout(
+      () => setActiveIndex((i) => i + 1),
+      STEP_INTERVAL_MS,
+    )
+    return () => clearTimeout(id)
+  }, [activeIndex, router])
+
+  const steps: AnalysisStep[] = STEP_LABELS.map((step, i) => ({
+    title: step.title,
+    detail: step.detail,
+    status: i < activeIndex ? "done" : i === activeIndex ? "active" : "todo",
+  }))
+
   return (
     <AuthShell aside={<SignUpStepper current="analysis" />}>
       <div className="space-y-10 pt-2">
@@ -63,7 +75,7 @@ export default function SignUpAnalysisPage() {
 
         <div className="grid gap-8 lg:grid-cols-[1fr_minmax(280px,360px)]">
           <div className="space-y-5">
-            <AnalysisChecklist steps={ANALYSIS_STEPS} />
+            <AnalysisChecklist steps={steps} />
             <p className="text-sm leading-relaxed text-text-2">
               <span className="font-semibold text-foreground">
                 What&apos;s happening:

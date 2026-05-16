@@ -1,7 +1,12 @@
+"use client"
+
 import type { ReactNode } from "react"
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
+import { withAuth } from "@/components/auth/with-auth"
 
-export default function AppLayout({ children }: { children: ReactNode }) {
+function AppLayout({ children }: { children: ReactNode }) {
   return <DashboardShell>{children}</DashboardShell>
 }
+
+export default withAuth(AppLayout)

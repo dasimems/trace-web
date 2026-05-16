@@ -1,10 +1,13 @@
+"use client"
+
 import { AuthShell } from "@/components/auth/auth-shell"
 import { ProgressStrip } from "@/components/auth/progress-strip"
 import { SignUpAccountForm } from "@/components/auth/sign-up-account-form"
 import { SignUpStepper } from "@/components/auth/sign-up-stepper"
+import { withRedirectIfAuthed } from "@/components/auth/with-redirect-if-authed"
 import { SIGN_UP_STEPS, getStepIndex } from "@/components/auth/sign-up-steps"
 
-export default function SignUpAccountPage() {
+function SignUpAccountPage() {
   const current = getStepIndex("account") + 1
   return (
     <AuthShell aside={<SignUpStepper current="account" />}>
@@ -26,3 +29,5 @@ export default function SignUpAccountPage() {
     </AuthShell>
   )
 }
+
+export default withRedirectIfAuthed(SignUpAccountPage)

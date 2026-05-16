@@ -1,42 +1,49 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts"
+import { format } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useMounted } from "@/hooks/use-mounted"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getNavHistory } from "@/api/investments"
+import { koboToNaira } from "@/lib/money"
 
-type Range = "1M" | "3M" | "1Y" | "3Y" | "All"
-const RANGES: ReadonlyArray<Range> = ["1M", "3M", "1Y", "3Y", "All"]
+type Period = "YTD" | "1Y" | "3Y"
+const PERIODS: ReadonlyArray<Period> = ["YTD", "1Y", "3Y"]
 
-type WeekRow = {
-  week: string
-  fund: number
-  bench: number
-}
-
-const DATA: ReadonlyArray<WeekRow> = [
-  { week: "Wk 1", fund: 1000, bench: 1000 },
-  { week: "Wk 2", fund: 1014, bench: 1006 },
-  { week: "Wk 3", fund: 1028, bench: 1010 },
-  { week: "Wk 4", fund: 1046, bench: 1014 },
-  { week: "Wk 5", fund: 1066, bench: 1018 },
-  { week: "Wk 6", fund: 1092, bench: 1022 },
-  { week: "Wk 7", fund: 1124, bench: 1028 },
-  { week: "Wk 8", fund: 1180, bench: 1032 },
-]
-
-export function PerformanceChart() {
+export function PerformanceChart({ productId }: { productId: string }) {
   const mounted = useMounted()
-  const [range, setRange] = useState<Range>("1Y")
+  const [period, setPeriod] = useState<Period>("1Y")
+  const { data, isLoading, error } = useEndpoint(
+    productId
+      ? `/investments/products/${productId}/nav-history?period=${period}`
+      : null,
+    () => getNavHistory(productId, period),
+  )
+
+  const chartData = useMemo(
+    () =>
+      data?.points.map((p) => ({
+        date: p.date,
+        nav: koboToNaira(p.navPerUnit),
+      })) ?? [],
+    [data?.points],
+  )
+
+  const totalReturn = data ? (data.totalReturnBps / 100).toFixed(1) : null
+  const cagr = data ? (data.cagrBps / 100).toFixed(1) : null
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -44,34 +51,52 @@ export function PerformanceChart() {
         <h3 className="font-display text-base font-semibold text-foreground">
           Performance · NAV
         </h3>
-        <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
-          Since launch · Apr 2023
-        </Badge>
+        {totalReturn !== null && (
+          <Badge
+            variant={data!.totalReturnBps >= 0 ? "good" : "warn"}
+            className="h-6 px-2.5 text-[11px]"
+          >
+            {data!.totalReturnBps >= 0 ? "+" : ""}{totalReturn}% over {period}
+          </Badge>
+        )}
+        {cagr !== null && (
+          <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
+            CAGR {cagr}%
+          </Badge>
+        )}
         <div className="ml-auto flex items-center gap-1.5">
-          {RANGES.map((r) => (
+          {PERIODS.map((p) => (
             <button
-              key={r}
+              key={p}
               type="button"
-              onClick={() => setRange(r)}
+              onClick={() => setPeriod(p)}
               className={cn(
-                "inline-flex h-7 items-center rounded-full px-2.5 text-xs font-medium transition-colors",
-                range === r
-                  ? "border border-lime-500 bg-lime-50 text-lime-700 dark:bg-lime-500/15 dark:text-lime-300"
-                  : "text-text-2 hover:bg-muted hover:text-foreground",
+                "inline-flex h-7 items-center rounded-full border px-2.5 text-xs font-medium transition-colors",
+                period === p
+                  ? "border-lime-500 bg-lime-50 text-lime-700 dark:bg-lime-500/15 dark:text-lime-300"
+                  : "border-border bg-card text-text-2 hover:border-neutral-300 hover:text-foreground dark:hover:border-neutral-700",
               )}
             >
-              {r}
+              {p}
             </button>
           ))}
         </div>
       </div>
 
       <div className="relative mt-5 h-[260px] w-full">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            No NAV history yet for this window.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <LineChart
-              data={[...DATA]}
-              margin={{ top: 8, right: 12, bottom: 0, left: -12 }}
+              data={chartData}
+              margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             >
               <CartesianGrid
                 vertical={false}
@@ -79,61 +104,54 @@ export function PerformanceChart() {
                 strokeDasharray="3 4"
               />
               <XAxis
-                dataKey="week"
+                dataKey="date"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={10}
+                tickFormatter={(d: string) => format(new Date(d), "MMM")}
                 tick={{ fontSize: 11, fill: "var(--color-text-3)" }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={6}
-                width={42}
-                tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+                width={48}
+                tickFormatter={(v: number) => `₦${v.toFixed(0)}`}
                 tick={{ fontSize: 11, fill: "var(--color-text-3)" }}
-                domain={[960, "dataMax + 20"]}
+                domain={["auto", "auto"]}
               />
-              <Line
-                dataKey="bench"
-                stroke="var(--color-neutral-400)"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={{
-                  r: 4,
-                  fill: "var(--color-neutral-400)",
-                  stroke: "var(--color-card)",
-                  strokeWidth: 2,
+              <Tooltip
+                cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }}
+                formatter={(value) =>
+                  [`₦${Number(value ?? 0).toFixed(2)}`, "NAV"]
+                }
+                labelFormatter={(d) =>
+                  format(new Date(d as string), "d MMM yyyy")
+                }
+                contentStyle={{
+                  background: "var(--color-card)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 8,
+                  fontSize: 12,
                 }}
               />
               <Line
-                dataKey="fund"
+                dataKey="nav"
                 stroke="var(--color-good-500)"
                 strokeWidth={2.25}
                 dot={false}
                 activeDot={{
-                  r: 5,
+                  r: 4,
                   fill: "var(--color-good-500)",
                   stroke: "var(--color-card)",
                   strokeWidth: 2,
                 }}
+                isAnimationActive
               />
             </LineChart>
           </ResponsiveContainer>
         )}
       </div>
-
-      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-text-2">
-        <li className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-good-500" />
-          LTCF-A
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-neutral-400" />
-          NGN MMF benchmark
-        </li>
-      </ul>
     </div>
   )
 }

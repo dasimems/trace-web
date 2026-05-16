@@ -1,8 +1,17 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getSafeToInvest } from "@/api/investments"
+import { formatNairaCompact } from "@/lib/money"
 
 export function SafeToInvestCard() {
+  const { data, isLoading, error } = useEndpoint(
+    "/investments/safe-to-invest",
+    getSafeToInvest,
+  )
+
   return (
     <div className="overflow-hidden rounded-2xl border border-lime-300 bg-lime-50/40 dark:border-lime-500/40 dark:bg-lime-500/5">
       <div className="bg-neutral-950 px-5 py-3">
@@ -10,40 +19,75 @@ export function SafeToInvestCard() {
       </div>
 
       <div className="px-5 py-5">
-        <div className="flex items-baseline gap-3">
-          <span className="font-display text-5xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
-            ₦35k
-          </span>
-          <span className="font-display text-3xl font-medium tabular-nums text-text-3 line-through">
-            ₦80k
-          </span>
-        </div>
-        <p className="mt-3 text-sm leading-relaxed text-text-2">
-          This month, without breaking your buffer or skipping a loan
-          repayment.
-        </p>
+        {data?.status === "ok" ? (
+          <>
+            <div className="flex items-baseline gap-3">
+              <span className="font-display text-5xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
+                {formatNairaCompact(data.suggested)}
+              </span>
+              <span className="font-display text-3xl font-medium tabular-nums text-text-3 line-through">
+                {formatNairaCompact(data.aggressive)}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-text-2">
+              {data.rationale}
+            </p>
 
-        <div className="mt-5">
-          <h4 className="font-mono text-[11px] font-semibold tracking-[0.16em] text-text-3">
-            DIVERSIFICATION SUGGESTION
-          </h4>
-          <p className="mt-2 text-sm leading-relaxed text-text-2">
-            You&rsquo;re{" "}
-            <span className="font-semibold text-foreground">45%</span>{" "}
-            concentrated in MMF. Move the next{" "}
-            <span className="font-semibold text-foreground">₦40k</span> into a
-            Coop fund and a small Eurobond slice for resilience.
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <BoundCard label="Conservative" value={data.conservative} />
+              <BoundCard label="Suggested" value={data.suggested} highlight />
+              <BoundCard label="Aggressive" value={data.aggressive} />
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              <Button size="lg" className="h-9 rounded-full px-4 shadow-primary">
+                Auto-allocate
+              </Button>
+              <Button variant="outline" size="lg" className="h-9 rounded-full px-4">
+                Show options
+              </Button>
+            </div>
+          </>
+        ) : data?.status === "insufficient_data" ? (
+          <p className="text-sm leading-relaxed text-text-2">
+            We need a few more weeks of activity to recommend a safe range.
           </p>
-        </div>
+        ) : isLoading ? (
+          <>
+            <Skeleton className="h-12 w-48" />
+            <Skeleton className="mt-3 h-4 w-3/4" />
+            <Skeleton className="mt-1 h-4 w-2/3" />
+          </>
+        ) : (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+      </div>
+    </div>
+  )
+}
 
-        <div className="mt-5 flex flex-wrap items-center gap-2.5">
-          <Button size="lg" className="h-9 rounded-full px-4 shadow-primary">
-            Auto-allocate
-          </Button>
-          <Button variant="outline" size="lg" className="h-9 rounded-full px-4">
-            Show options
-          </Button>
-        </div>
+function BoundCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: number
+  highlight?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 ${
+        highlight
+          ? "border-lime-400 bg-card"
+          : "border-border bg-card/60"
+      }`}
+    >
+      <div className="font-mono text-[10px] tracking-[0.16em] text-text-3">
+        {label.toUpperCase()}
+      </div>
+      <div className="mt-1 font-display text-base font-semibold tabular-nums text-foreground">
+        {formatNairaCompact(value)}
       </div>
     </div>
   )

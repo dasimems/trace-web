@@ -1,94 +1,112 @@
+"use client"
+
+import { useMemo, useState } from "react"
 import { Bookmark, SlidersHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
-import { CategoryFilterPills } from "@/components/dashboard/opportunities/category-filter-pills"
 import {
-  OpportunityCard,
-  type Opportunity,
-} from "@/components/dashboard/opportunities/opportunity-card"
+  CategoryFilterPills,
+  type OpportunityFilter,
+} from "@/components/dashboard/opportunities/category-filter-pills"
+import { OpportunityCard } from "@/components/dashboard/opportunities/opportunity-card"
 import { TopMatchFeature } from "@/components/dashboard/opportunities/top-match-feature"
-
-const MORE_MATCHES: ReadonlyArray<Opportunity> = [
-  {
-    id: "lagos-trader-coop-fund",
-    type: "Investment",
-    matchPercent: 91,
-    title: "Lagos Trader Coop Fund",
-    description: "Same-sector traders averaged 17.4% last year.",
-    stats: { return: "18% est.", risk: "Low-Med", min: "₦25k",  tenor: "12 mo"  },
-    provider: { initials: "LT", name: "LTC", verified: true },
-  },
-  {
-    id: "afdb-women-in-trade-grant",
-    type: "Grant",
-    matchPercent: 88,
-    title: "AfDB Women in Trade Grant",
-    description: "You meet 9/10 eligibility checks.",
-    stats: { return: "Non-repayable", risk: "None", min: "—",   tenor: "—"      },
-    provider: { initials: "AF", name: "AfDB", verified: true },
-  },
-  {
-    id: "stanbic-ibtc-mmf",
-    type: "Investment",
-    matchPercent: 84,
-    title: "Stanbic IBTC Money Market Fund",
-    description: "Park your ₦42k safe-to-save while staying liquid.",
-    stats: { return: "13.2% p.a.", risk: "Low", min: "₦5k",     tenor: "Liquid" },
-    provider: { initials: "ST", name: "Stanbic", verified: true },
-  },
-  {
-    id: "branch-quick-top-up",
-    type: "Loan",
-    matchPercent: 78,
-    title: "Branch · Quick Top-up",
-    description: "Available, but rate is 2× your tier average.",
-    stats: { return: "6.5% / mo", risk: "High", min: "—",       tenor: "30 days" },
-    provider: { initials: "BR", name: "Branch", verified: false },
-  },
-  {
-    id: "jumia-vendor-boost",
-    type: "Partnership",
-    matchPercent: 72,
-    title: "Jumia Vendor Boost",
-    description: "Pairs with your textile inventory.",
-    stats: { return: "Volume rebate", risk: "Med", min: "—",    tenor: "—"      },
-    provider: { initials: "JU", name: "Jumia", verified: true },
-  },
-]
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getOpportunities, type TOpportunity } from "@/api/opportunities"
 
 export default function OpportunitiesPage() {
+  const [filter, setFilter] = useState<OpportunityFilter>("ALL")
+  const { data, isLoading, error } = useEndpoint("/opportunities", () =>
+    getOpportunities(),
+  )
+
+  const filtered = useMemo<TOpportunity[]>(() => {
+    if (!data) return []
+    if (filter === "ALL") return data
+    return data.filter((o) => o.source === filter)
+  }, [data, filter])
+
+  const top = filtered[0] ?? null
+  const rest = filtered.slice(1)
+  const savedCount = data?.filter((o) => o.isSaved).length ?? 0
+
   return (
     <DashboardPage
       title="Opportunity marketplace"
-      meta="12 fresh matches · ranked by Copilot using your behaviour, not your demographics"
+      meta={
+        data
+          ? `${data.length} fresh matches · ranked by Copilot`
+          : "Ranked by Copilot using your behaviour, not your demographics"
+      }
       actions={
         <>
           <Button variant="outline" size="lg" className="h-9 gap-2 rounded-full">
-            <SlidersHorizontal /> 4 filters
+            <SlidersHorizontal /> Filters
           </Button>
           <Button variant="outline" size="lg" className="h-9 gap-2 rounded-full">
-            <Bookmark /> Saved (3)
+            <Bookmark /> Saved ({savedCount})
           </Button>
         </>
       }
     >
       <div className="space-y-6">
-        <CategoryFilterPills />
+        <CategoryFilterPills active={filter} onChange={setFilter} />
 
-        <TopMatchFeature />
+        <TopMatchFeature opportunity={top} isLoading={isLoading && !data} />
 
         <section className="space-y-4">
           <h2 className="font-mono text-[11px] font-semibold tracking-[0.16em] text-text-3">
             MORE MATCHES FOR YOU
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {MORE_MATCHES.map((opp, i) => (
-              <OpportunityCard key={opp.title} opportunity={opp} index={i} />
-            ))}
-          </div>
+          {rest.length === 0 ? (
+            isLoading && !data ? (
+              <MatchesSkeleton />
+            ) : error ? (
+              <p className="text-sm text-destructive">{error}</p>
+            ) : data && data.length > 0 ? (
+              <p className="text-sm text-text-3">
+                That&rsquo;s every match for the {filter === "ALL" ? "current view" : `${filter} filter`} right now.
+              </p>
+            ) : (
+              <p className="text-sm text-text-3">
+                No opportunities yet — keep transacting to unlock matches.
+              </p>
+            )
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {rest.map((opp, i) => (
+                <OpportunityCard
+                  key={`${opp.source}-${opp.id}`}
+                  opportunity={opp}
+                  index={i}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </DashboardPage>
+  )
+}
+
+function MatchesSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-border bg-card p-5 shadow-card"
+        >
+          <div className="flex items-start justify-between">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="mt-4 h-5 w-3/4" />
+          <Skeleton className="mt-2 h-4 w-full" />
+          <Skeleton className="mt-4 h-12 w-full" />
+        </div>
+      ))}
+    </div>
   )
 }

@@ -1,32 +1,31 @@
 "use client"
 
-import { useState } from "react"
 import { motion } from "motion/react"
 import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { OpportunitySource } from "@/lib/enum"
 
-type CategoryId =
-  | "all"
-  | "loans"
-  | "investments"
-  | "grants"
-  | "side-income"
-  | "partnerships"
-  | "savings"
+type FilterId = "ALL" | OpportunitySource
 
-const CATEGORIES: ReadonlyArray<{ id: CategoryId; label: string }> = [
-  { id: "all",          label: "All"           },
-  { id: "loans",        label: "Loans"         },
-  { id: "investments",  label: "Investments"   },
-  { id: "grants",       label: "Grants"        },
-  { id: "side-income",  label: "Side income"   },
-  { id: "partnerships", label: "Partnerships"  },
-  { id: "savings",      label: "Savings"       },
+const CATEGORIES: ReadonlyArray<{ id: FilterId; label: string }> = [
+  { id: "ALL", label: "All" },
+  { id: OpportunitySource.LOAN, label: "Loans" },
+  { id: OpportunitySource.INVESTMENT, label: "Investments" },
+  { id: OpportunitySource.GRANT, label: "Grants" },
 ]
 
-export function CategoryFilterPills() {
-  const [active, setActive] = useState<CategoryId>("all")
+export type OpportunityFilter = FilterId
+
+type CategoryFilterPillsProps = {
+  active: OpportunityFilter
+  onChange: (id: OpportunityFilter) => void
+}
+
+export function CategoryFilterPills({
+  active,
+  onChange,
+}: CategoryFilterPillsProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {CATEGORIES.map((category) => {
@@ -36,7 +35,7 @@ export function CategoryFilterPills() {
             key={category.id}
             type="button"
             whileTap={{ scale: 0.97 }}
-            onClick={() => setActive(category.id)}
+            onClick={() => onChange(category.id)}
             className={cn(
               "inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors",
               selected

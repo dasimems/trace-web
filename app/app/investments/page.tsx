@@ -1,45 +1,23 @@
+"use client"
+
 import { ChevronDown } from "lucide-react"
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
-import {
-  InvestmentPickCard,
-  type InvestmentPick,
-} from "@/components/dashboard/investments/investment-pick-card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { InvestmentPickCard } from "@/components/dashboard/investments/investment-pick-card"
 import { PortfolioCard } from "@/components/dashboard/investments/portfolio-card"
 import { ProjectionChart } from "@/components/dashboard/investments/projection-chart"
 import { SafeToInvestCard } from "@/components/dashboard/investments/safe-to-invest-card"
-
-const PICKS: ReadonlyArray<InvestmentPick> = [
-  {
-    id: "stanbic-ibtc-mmf",
-    type: "Money market",
-    title: "Stanbic IBTC MMF",
-    description: "Your buffer earns ~14× your savings APR.",
-    return: "13.2% p.a.",
-    risk: "Low",
-    confidence: 92,
-  },
-  {
-    id: "lagos-trader-coop-fund",
-    type: "Coop · sector",
-    title: "Lagos Trader Coop Fund",
-    description: "Same-sector traders averaged 17.4% last year.",
-    return: "17.4% p.a.",
-    risk: "Low-Med",
-    confidence: 88,
-  },
-  {
-    id: "fbnquest-eurobond",
-    type: "Bond",
-    title: "FBNQuest Eurobond",
-    description: "USD diversifier — softens NGN moves.",
-    return: "8.6% USD",
-    risk: "Low",
-    confidence: 81,
-  },
-]
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getInvestmentProducts } from "@/api/investments"
 
 export default function InvestmentsPage() {
+  const { data, isLoading, error } = useEndpoint(
+    "/investments/products",
+    getInvestmentProducts,
+  )
+  const products = data ?? []
+
   return (
     <DashboardPage
       title="Investment recommendations"
@@ -64,15 +42,52 @@ export default function InvestmentsPage() {
 
         <section className="space-y-4">
           <h2 className="font-mono text-[11px] font-semibold tracking-[0.16em] text-text-3">
-            AI-PICKED FOR YOU, THIS WEEK
+            AI-PICKED FOR YOU
           </h2>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {PICKS.map((pick, i) => (
-              <InvestmentPickCard key={pick.title} pick={pick} index={i} />
-            ))}
-          </div>
+          {products.length === 0 ? (
+            isLoading ? (
+              <PicksSkeleton />
+            ) : error ? (
+              <p className="text-sm text-destructive">{error}</p>
+            ) : (
+              <p className="text-sm text-text-3">
+                No investment products available right now.
+              </p>
+            )
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {products.slice(0, 6).map((product, i) => (
+                <InvestmentPickCard
+                  key={product.id}
+                  product={product}
+                  index={i}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </DashboardPage>
+  )
+}
+
+function PicksSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-border bg-card p-5 shadow-card"
+        >
+          <div className="flex items-start justify-between">
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="mt-4 h-5 w-3/4" />
+          <Skeleton className="mt-2 h-4 w-full" />
+          <Skeleton className="mt-4 h-12 w-full" />
+        </div>
+      ))}
+    </div>
   )
 }

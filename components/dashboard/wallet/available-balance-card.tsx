@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { motion } from "motion/react"
 import {
   ArrowLeft,
@@ -14,6 +15,9 @@ import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatNaira, splitNairaParts } from "@/lib/money"
+import useWalletStore from "@/stores/wallet-store"
 
 type Action = {
   label: string
@@ -31,6 +35,22 @@ const ACTIONS: ReadonlyArray<Action> = [
 ]
 
 export function AvailableBalanceCard() {
+  const snapshot = useWalletStore((s) => s.snapshot)
+  const isLoading = useWalletStore((s) => s.isLoading)
+  const error = useWalletStore((s) => s.fetchError)
+  const hasFetched = useWalletStore((s) => s.hasFetched)
+  const fetchWallet = useWalletStore((s) => s.fetchWallet)
+
+  useEffect(() => {
+    if (!hasFetched) fetchWallet()
+  }, [hasFetched, fetchWallet])
+
+  const balance = snapshot?.balance
+  const todayNet = balance ? balance.todayInflow - balance.todayOutflow : 0
+  const todayLabel = balance
+    ? `${todayNet >= 0 ? "+" : ""}${formatNaira(todayNet)} today`
+    : null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -40,22 +60,27 @@ export function AvailableBalanceCard() {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="text-sm text-text-3">Available balance</div>
-        <Badge variant="good" className="h-6 px-2.5 text-xs">
-          +₦82,300 today
-        </Badge>
+        {todayLabel && (
+          <Badge
+            variant={todayNet >= 0 ? "good" : "warn"}
+            className="h-6 px-2.5 text-xs"
+          >
+            {todayLabel}
+          </Badge>
+        )}
       </div>
 
-      <div className="mt-3 flex items-baseline">
-        <span className="font-display text-[56px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
-          ₦487,210
-        </span>
-        <span className="font-display text-2xl font-semibold tabular-nums text-text-3">
-          .40
-        </span>
-      </div>
-      <div className="mt-2 text-sm text-text-3">
-        Ledger ₦487,210.40 · Pending ₦0.00
-      </div>
+      {balance ? (
+        <BalanceDisplay
+          available={balance.available}
+          ledger={balance.ledger}
+          pending={balance.pending}
+        />
+      ) : isLoading || !error ? (
+        <BalanceSkeleton />
+      ) : (
+        <p className="mt-3 text-sm text-destructive">{error}</p>
+      )}
 
       <BalanceSparkline className="mt-3" />
 
@@ -81,6 +106,42 @@ export function AvailableBalanceCard() {
         <span>Daily limit · ₦1,000,000</span>
       </div>
     </motion.div>
+  )
+}
+
+function BalanceDisplay({
+  available,
+  ledger,
+  pending,
+}: {
+  available: number
+  ledger: number
+  pending: number
+}) {
+  const parts = splitNairaParts(available)
+  return (
+    <>
+      <div className="mt-3 flex items-baseline">
+        <span className="font-display text-[56px] font-semibold tabular-nums leading-none tracking-tight text-foreground">
+          {parts.whole}
+        </span>
+        <span className="font-display text-2xl font-semibold tabular-nums text-text-3">
+          {parts.decimal}
+        </span>
+      </div>
+      <div className="mt-2 text-sm text-text-3">
+        Ledger {formatNaira(ledger)} · Pending {formatNaira(pending)}
+      </div>
+    </>
+  )
+}
+
+function BalanceSkeleton() {
+  return (
+    <>
+      <Skeleton className="mt-3 h-14 w-64" />
+      <Skeleton className="mt-2 h-4 w-56" />
+    </>
   )
 }
 

@@ -2,12 +2,51 @@
 
 import { useRouter } from "next/navigation"
 import { motion } from "motion/react"
-import { ArrowRight, Check } from "lucide-react"
+import { ArrowRight } from "lucide-react"
+import { toast } from "sonner"
+import { Controller, useForm } from "react-hook-form"
+import { joiResolver } from "@hookform/resolvers/joi"
+import { useMutation } from "@tanstack/react-query"
+import Joi from "joi"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FileUploadZone } from "@/components/auth/file-upload-zone"
-import { getNextStep } from "@/components/auth/sign-up-steps"
+import { NumericInput } from "@/components/ui/numeric-input"
+import { Spinner } from "@/components/ui/spinner"
+import { PillPicker, type PillOption } from "@/components/auth/pill-picker"
+import { getNextStep, SIGN_UP_STEPS } from "@/components/auth/sign-up-steps"
+import { createAccount } from "@/api/auth"
+import { constructErrorMessage } from "@/api/functions"
+import { UserGenders } from "@/lib/enum"
+import {
+  addressSchema,
+  bvnSchema,
+  dateOfBirthSchema,
+  genderSchema,
+  ninSchema,
+} from "@/lib/validation"
+import useSignUpBufferStore from "@/stores/sign-up-buffer-store"
+
+const GENDER_OPTIONS: ReadonlyArray<PillOption<UserGenders>> = [
+  { id: UserGenders.MALE,   label: "Male" },
+  { id: UserGenders.FEMALE, label: "Female" },
+]
+
+type FormValues = {
+  bvn: string
+  nin: string
+  dateOfBirth: string
+  gender: UserGenders
+  address: string
+}
+
+const schema = Joi.object<FormValues>({
+  bvn: bvnSchema,
+  nin: ninSchema,
+  dateOfBirth: dateOfBirthSchema,
+  gender: genderSchema,
+  address: addressSchema,
+})
 
 function FieldLabel({
   htmlFor,
@@ -25,49 +64,121 @@ function FieldLabel({
 
 export function SignUpIdentityForm() {
   const router = useRouter()
+  const bankStep = useSignUpBufferStore((s) => s.bankStep)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const next = getNextStep("identity")
-    if (next) router.push(next.path)
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: joiResolver(schema),
+    mode: "onTouched",
+    defaultValues: {
+      bvn: "",
+      nin: "",
+      dateOfBirth: "",
+      gender: undefined as unknown as UserGenders,
+      address: "",
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: createAccount,
+    onSuccess: () => {
+      toast.success("Verified. Spinning up your virtual account…")
+      const next = getNextStep("identity")
+      if (next) router.push(next.path)
+    },
+    onError: (error) => {
+      const message = constructErrorMessage(
+        error as TApiErrorResponseType,
+        "Couldn't verify your identity. Please try again.",
+      )
+      toast.error(message)
+    },
+  })
+
+  async function onSubmit(values: FormValues) {
+    if (!bankStep || !bankStep.category) {
+      toast.error("Missing earlier details — let's restart from the bank step.")
+      router.replace(SIGN_UP_STEPS[1].path)
+      return
+    }
+    await mutation.mutateAsync({
+      firstName: bankStep.firstName,
+      lastName: bankStep.lastName,
+      middleName: bankStep.middleName,
+      phoneNumber: bankStep.phoneNumber,
+      category: bankStep.category,
+      dateOfBirth: new Date(values.dateOfBirth).toISOString(),
+      gender: values.gender,
+      address: values.address.trim(),
+      bvn: values.bvn.trim(),
+      ...(values.nin?.trim() ? { nin: values.nin.trim() } : {}),
+    })
   }
+
+  const submitting = isSubmitting || mutation.isPending
 
   return (
     <motion.form
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
       className="space-y-7"
     >
       <div className="space-y-2">
         <FieldLabel htmlFor="bvn">Bank Verification Number (BVN)</FieldLabel>
-        <div className="relative flex h-11 items-center rounded-lg border border-input bg-card pl-3 pr-2 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-          <input
-            id="bvn"
-            name="bvn"
-            inputMode="numeric"
-            defaultValue="2214 ··· ··78"
-            className="h-full flex-1 bg-transparent text-base outline-none"
-          />
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-good-200 bg-good-50 px-2.5 py-1 text-xs font-medium text-good-700 dark:border-good-500/30 dark:bg-good-500/15 dark:text-good-300">
-            <Check className="size-3.5" /> Verified
-          </span>
-        </div>
-        <p className="text-sm text-text-3">
-          We do an SMS-OTP check with NIBSS. We never store your full BVN.
-        </p>
+        <Controller
+          name="bvn"
+          control={control}
+          render={({ field }) => (
+            <NumericInput
+              id="bvn"
+              maxDigits={11}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              aria-invalid={Boolean(errors.bvn)}
+              placeholder="11-digit BVN"
+              className="h-11 bg-card text-base"
+            />
+          )}
+        />
+        {errors.bvn ? (
+          <p className="text-sm text-destructive">{errors.bvn.message}</p>
+        ) : (
+          <p className="text-sm text-text-3">
+            We use NIBSS for verification. Your BVN is encrypted at rest.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <FieldLabel htmlFor="nin">National Identity Number (NIN)</FieldLabel>
-        <Input
-          id="nin"
+        <FieldLabel htmlFor="nin">
+          National Identity Number (NIN){" "}
+          <span className="ml-1 text-xs font-normal text-text-3">optional</span>
+        </FieldLabel>
+        <Controller
           name="nin"
-          inputMode="numeric"
-          defaultValue="8174 5520 9981"
-          className="h-11 bg-card text-base"
+          control={control}
+          render={({ field }) => (
+            <NumericInput
+              id="nin"
+              maxDigits={11}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              aria-invalid={Boolean(errors.nin)}
+              placeholder="11-digit NIN"
+              className="h-11 bg-card text-base"
+            />
+          )}
         />
+        {errors.nin && <p className="text-sm text-destructive">{errors.nin.message}</p>}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -75,48 +186,69 @@ export function SignUpIdentityForm() {
           <FieldLabel htmlFor="dob">Date of birth</FieldLabel>
           <Input
             id="dob"
-            name="dob"
-            defaultValue="14 March 1996"
+            type="date"
+            aria-invalid={Boolean(errors.dateOfBirth)}
             className="h-11 bg-card text-base"
+            {...register("dateOfBirth")}
           />
+          {errors.dateOfBirth && (
+            <p className="text-sm text-destructive">
+              {errors.dateOfBirth.message}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
-          <FieldLabel htmlFor="state">Residential state</FieldLabel>
-          <Input
-            id="state"
-            name="state"
-            defaultValue="Lagos · Mainland"
-            className="h-11 bg-card text-base"
+          <FieldLabel htmlFor="gender">Gender</FieldLabel>
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <PillPicker
+                options={GENDER_OPTIONS}
+                value={field.value ?? null}
+                onChange={field.onChange}
+                ariaLabel="Select your gender"
+                name="gender"
+              />
+            )}
           />
+          {errors.gender && (
+            <p className="text-sm text-destructive">{errors.gender.message}</p>
+          )}
         </div>
       </div>
 
-      <div className="space-y-3">
-        <FieldLabel htmlFor="id_upload-input">
-          Upload government-issued ID
-        </FieldLabel>
-        <FileUploadZone
-          name="id_upload"
-          title="Drop a clear photo of your driver's license or NIN slip"
-          hint="Or use your phone — we'll text a secure link"
+      <div className="space-y-2">
+        <FieldLabel htmlFor="address">Residential address</FieldLabel>
+        <Input
+          id="address"
+          autoComplete="street-address"
+          aria-invalid={Boolean(errors.address)}
+          placeholder="12 Marina Road, Lagos"
+          className="h-11 bg-card text-base"
+          {...register("address")}
         />
+        {errors.address && (
+          <p className="text-sm text-destructive">{errors.address.message}</p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
         <Button
           type="submit"
           size="lg"
+          disabled={submitting}
           className="h-11 rounded-full px-5 shadow-primary"
         >
-          Submit for verification <ArrowRight />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="h-11 rounded-full px-5"
-        >
-          Save &amp; continue later
+          {submitting ? (
+            <>
+              Verifying <Spinner />
+            </>
+          ) : (
+            <>
+              Submit for verification <ArrowRight />
+            </>
+          )}
         </Button>
       </div>
     </motion.form>

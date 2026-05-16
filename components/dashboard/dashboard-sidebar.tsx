@@ -18,9 +18,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { NAV_SECTIONS, type NavItem } from "@/components/dashboard/sidebar-nav-config"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getOpportunities } from "@/api/opportunities"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const opportunitiesQuery = useEndpoint("/opportunities", () =>
+    getOpportunities(),
+  )
+  const opportunitiesCount = opportunitiesQuery.data?.length ?? 0
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-border">
@@ -40,13 +46,22 @@ export function DashboardSidebar() {
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items.map((item) => (
-                  <NavItemRow
-                    key={item.href}
-                    item={item}
-                    active={pathname === item.href}
-                  />
-                ))}
+                {section.items.map((item) => {
+                  const dynamicBadge =
+                    item.href === "/app/opportunities" && opportunitiesCount > 0
+                      ? {
+                          text: String(opportunitiesCount),
+                          tone: "lime" as const,
+                        }
+                      : undefined
+                  return (
+                    <NavItemRow
+                      key={item.href}
+                      item={dynamicBadge ? { ...item, badge: dynamicBadge } : item}
+                      active={pathname === item.href}
+                    />
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

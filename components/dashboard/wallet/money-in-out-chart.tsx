@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   Bar,
   BarChart,
@@ -10,32 +11,49 @@ import {
 } from "recharts"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
-
-type WeekRow = {
-  week: string
-  in: number
-  out: number
-}
-
-const DATA: ReadonlyArray<WeekRow> = [
-  { week: "W1", in: 96,  out: 58 },
-  { week: "W2", in: 142, out: 92 },
-  { week: "W3", in: 168, out: 118 },
-  { week: "W4", in: 220, out: 124 },
-]
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getMoneyFlow } from "@/api/analysis"
+import { formatNairaCompact, koboToNaira } from "@/lib/money"
 
 export function MoneyInOutChart() {
   const mounted = useMounted()
+  const { data, isLoading, error } = useEndpoint(
+    "/analysis/money-flow",
+    getMoneyFlow,
+  )
+
+  const chartData = useMemo(
+    () =>
+      data?.weeks.map((w) => ({
+        week: w.label,
+        in: koboToNaira(w.in),
+        out: koboToNaira(w.out),
+      })) ?? [],
+    [data?.weeks],
+  )
+
+  const net = useMemo(
+    () => data?.weeks.reduce((acc, w) => acc + (w.in - w.out), 0) ?? 0,
+    [data?.weeks],
+  )
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
-          Money in vs out · 30 days
+          Money in vs out · {chartData.length || 4} weeks
         </h3>
-        <Badge variant="good" className="h-6 px-2.5 text-[11px]">
-          Net +₦174,210
-        </Badge>
+        {data && (
+          <Badge
+            variant={net >= 0 ? "good" : "warn"}
+            className="h-6 px-2.5 text-[11px]"
+          >
+            Net {net >= 0 ? "+" : ""}
+            {formatNairaCompact(net)}
+          </Badge>
+        )}
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-2 sm:ml-auto">
           <li className="flex items-center gap-1.5">
             <span className="size-2 rounded-full bg-lime-500" />
@@ -49,10 +67,18 @@ export function MoneyInOutChart() {
       </div>
 
       <div className="relative mt-5 h-[220px] w-full">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            No activity to chart yet.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <BarChart
-              data={[...DATA]}
+              data={chartData}
               barGap={8}
               barCategoryGap={28}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
@@ -85,13 +111,6 @@ export function MoneyInOutChart() {
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
-
-      <div className="mt-3 flex justify-end">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-950 px-3 py-1 font-mono text-[11px] tracking-wide text-white">
-          <span className="size-1.5 rounded-full bg-lime-500" />
-          Friday-Sunday accounts for 64% of inflow
-        </span>
       </div>
     </div>
   )

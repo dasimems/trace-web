@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   Bar,
   BarChart,
@@ -10,25 +11,46 @@ import {
 } from "recharts"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getCategoryTrend } from "@/api/analysis"
+import { koboToNaira } from "@/lib/money"
 
-type CategoryRow = {
-  label: string
-  avg: number
-  current: number
-  fill: string
+const TONE_CYCLE = [
+  "var(--color-warn-500)",
+  "var(--color-info-500)",
+  "var(--color-purple-500)",
+  "var(--color-bad-500)",
+  "var(--color-lime-500)",
+  "var(--color-good-500)",
+] as const
+
+function humanizeCategory(category: string): string {
+  return category
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
-
-const ROWS: ReadonlyArray<CategoryRow> = [
-  { label: "Food",     avg: 78,  current: 124, fill: "var(--color-warn-500)"   },
-  { label: "Transport", avg: 64, current: 72,  fill: "var(--color-info-500)"   },
-  { label: "Bills",    avg: 60,  current: 64,  fill: "var(--color-purple-500)" },
-  { label: "Shopping", avg: 32,  current: 28,  fill: "var(--color-bad-500)"    },
-  { label: "Other",    avg: 30,  current: 24,  fill: "var(--color-lime-500)"   },
-]
 
 export function CategoryTrendChart() {
   const mounted = useMounted()
+  const { data, isLoading, error } = useEndpoint(
+    "/analysis/category-trend",
+    getCategoryTrend,
+  )
+
+  const rows = useMemo(
+    () =>
+      data?.items.map((item, i) => ({
+        label: humanizeCategory(item.category),
+        avg: koboToNaira(item.average),
+        current: koboToNaira(item.current),
+        fill: TONE_CYCLE[i % TONE_CYCLE.length],
+      })) ?? [],
+    [data?.items],
+  )
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex items-center gap-3">
@@ -41,10 +63,18 @@ export function CategoryTrendChart() {
       </div>
 
       <div className="relative mt-4 h-[260px] w-full">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : rows.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            Not enough spend yet to compare.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <BarChart
-              data={[...ROWS]}
+              data={rows}
               margin={{ top: 12, right: 8, bottom: 0, left: -16 }}
               barCategoryGap={20}
               barGap={4}
@@ -56,29 +86,23 @@ export function CategoryTrendChart() {
                 tickMargin={10}
                 tick={{ fontSize: 11, fill: "var(--color-text-3)" }}
               />
-              <YAxis hide />
-              <Bar
-                dataKey="avg"
-                radius={[6, 6, 0, 0]}
-                maxBarSize={26}
-                fill="var(--color-neutral-200)"
-                className="dark:[&_path]:fill-neutral-800"
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={6}
+                width={42}
+                tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 11, fill: "var(--color-text-3)" }}
               />
-              <Bar dataKey="current" radius={[6, 6, 0, 0]} maxBarSize={26}>
-                {ROWS.map((row) => (
+              <Bar dataKey="avg" fill="var(--color-neutral-200)" radius={[8, 8, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="current" radius={[8, 8, 0, 0]} maxBarSize={20}>
+                {rows.map((row) => (
                   <Cell key={row.label} fill={row.fill} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
-
-      <div className="mt-3 flex justify-start">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-950 px-3 py-1 font-mono text-[11px] tracking-wide text-white">
-          <span className="size-1.5 rounded-full bg-bad-400" />
-          Food category broke 8-week pattern · 5 nights running
-        </span>
       </div>
     </div>
   )

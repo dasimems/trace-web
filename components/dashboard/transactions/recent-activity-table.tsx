@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import type { LucideIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -21,146 +23,142 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import {
+  getTransactions,
+  type TTransaction,
+} from "@/api/transactions"
+import { getRecurring } from "@/api/analysis"
+import {
+  TransactionCategory,
+  TransactionDirection,
+  TransactionStatus,
+} from "@/lib/enum"
+import { formatNaira } from "@/lib/money"
+import { formatSmartDate } from "@/lib/functions"
 
 type CategoryTone = "warn" | "lime" | "info" | "purple" | "bad" | "muted"
 
-type CaptionTone = "recurring" | "income" | "ai" | "anomaly"
+type CaptionKind = "recurring" | "income" | "anomaly" | "ai"
 
-type Activity = {
-  initials: string
-  merchant: string
-  caption: { kind: CaptionTone; text: string }
-  category: { label: string; tone: CategoryTone }
-  channel: string
-  date: string
-  amount: number
-  needsReview?: boolean
+const CATEGORY_META: Record<
+  TransactionCategory,
+  { label: string; tone: CategoryTone }
+> = {
+  [TransactionCategory.INCOME]: { label: "Income", tone: "lime" },
+  [TransactionCategory.TRANSFER]: { label: "Transfer", tone: "muted" },
+  [TransactionCategory.FOOD_AND_DINING]: { label: "Food & dining", tone: "warn" },
+  [TransactionCategory.TRANSPORT]: { label: "Transport", tone: "info" },
+  [TransactionCategory.BILLS_AND_UTILITIES]: { label: "Bills", tone: "purple" },
+  [TransactionCategory.SHOPPING]: { label: "Shopping", tone: "bad" },
+  [TransactionCategory.ENTERTAINMENT]: { label: "Lifestyle", tone: "purple" },
+  [TransactionCategory.HEALTH]: { label: "Health", tone: "info" },
+  [TransactionCategory.EDUCATION]: { label: "Education", tone: "info" },
+  [TransactionCategory.SAVINGS]: { label: "Save", tone: "info" },
+  [TransactionCategory.INVESTMENT]: { label: "Invest", tone: "info" },
+  [TransactionCategory.FEES]: { label: "Fees", tone: "muted" },
+  [TransactionCategory.OTHER]: { label: "Other", tone: "muted" },
 }
 
-const ACTIVITIES: ReadonlyArray<Activity> = [
-  {
-    initials: "CD",
-    merchant: "Chowdeck",
-    caption: { kind: "recurring", text: "Recurring · monthly" },
-    category: { label: "Food & dining", tone: "warn" },
-    channel: "GTBank",
-    date: "Today · 8:14pm",
-    amount: -4_200,
-  },
-  {
-    initials: "BF",
-    merchant: "Salary · Balogun Fabrics",
-    caption: { kind: "income", text: "Income · weekly" },
-    category: { label: "Income", tone: "lime" },
-    channel: "Squad",
-    date: "Today · 9:01am",
-    amount: 340_000,
-  },
-  {
-    initials: "BT",
-    merchant: "Bolt rides",
-    caption: { kind: "ai", text: "AI-tagged · 99% confident" },
-    category: { label: "Transport", tone: "info" },
-    channel: "11:42pm",
-    date: "Yesterday · 11:42pm",
-    amount: -3_150,
-  },
-  {
-    initials: "MB",
-    merchant: "Mr. Biggs · Surulere",
-    caption: { kind: "anomaly", text: "Unusual time vs baseline" },
-    category: { label: "Food & dining", tone: "warn" },
-    channel: "7:20pm",
-    date: "Yesterday · 7:20pm",
-    amount: -5_800,
-    needsReview: true,
-  },
-  {
-    initials: "IK",
-    merchant: "IKEDC bill",
-    caption: { kind: "recurring", text: "Recurring · monthly" },
-    category: { label: "Bills", tone: "purple" },
-    channel: "2:11pm",
-    date: "8 May · 2:11pm",
-    amount: -18_400,
-  },
-  {
-    initials: "JM",
-    merchant: "Jumia order",
-    caption: { kind: "ai", text: "AI-tagged · 99% confident" },
-    category: { label: "Shopping", tone: "bad" },
-    channel: "10:00am",
-    date: "7 May · 10:00am",
-    amount: -24_990,
-  },
-  {
-    initials: "AD",
-    merchant: "Transfer · Adaobi",
-    caption: { kind: "ai", text: "AI-tagged · 99% confident" },
-    category: { label: "Transfer", tone: "muted" },
-    channel: "8:55am",
-    date: "7 May · 8:55am",
-    amount: -15_000,
-  },
-  {
-    initials: "SP",
-    merchant: "Spotify",
-    caption: { kind: "recurring", text: "Recurring · monthly" },
-    category: { label: "Bills", tone: "purple" },
-    channel: "12:00am",
-    date: "6 May · 12:00am",
-    amount: -1_300,
-  },
-  {
-    initials: "PS",
-    merchant: "Transaction · POS Apapa",
-    caption: { kind: "ai", text: "AI-tagged · 99% confident" },
-    category: { label: "Income", tone: "lime" },
-    channel: "Squad",
-    date: "6 May · 4:32pm",
-    amount: 68_500,
-  },
-  {
-    initials: "UB",
-    merchant: "Uber Eats",
-    caption: { kind: "ai", text: "AI-tagged · 99% confident" },
-    category: { label: "Food & dining", tone: "warn" },
-    channel: "9:11pm",
-    date: "5 May · 9:11pm",
-    amount: -5_400,
-  },
-]
-
-const CAPTION_ICON: Record<CaptionTone, LucideIcon | null> = {
+const CAPTION_ICON: Record<CaptionKind, LucideIcon | null> = {
   recurring: RefreshCw,
   income: ArrowUpRight,
-  ai: null,
   anomaly: AlertTriangle,
+  ai: null,
 }
 
-const CAPTION_COLOR: Record<CaptionTone, string> = {
+const CAPTION_COLOR: Record<CaptionKind, string> = {
   recurring: "text-text-3",
-  income:    "text-lime-600 dark:text-lime-400",
-  ai:        "text-text-3",
-  anomaly:   "text-warn-600 dark:text-warn-400",
+  income: "text-lime-600 dark:text-lime-400",
+  anomaly: "text-warn-600 dark:text-warn-400",
+  ai: "text-text-3",
 }
 
 const CATEGORY_BG: Record<CategoryTone, string> = {
-  warn:   "bg-warn-50 text-warn-700 border-warn-200 dark:bg-warn-500/15 dark:text-warn-300 dark:border-warn-500/30",
-  lime:   "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-500/15 dark:text-lime-300 dark:border-lime-500/30",
-  info:   "bg-info-50 text-info-700 border-info-200 dark:bg-info-500/15 dark:text-info-300 dark:border-info-500/30",
-  purple: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
-  bad:    "bg-bad-50 text-bad-700 border-bad-200 dark:bg-bad-500/15 dark:text-bad-300 dark:border-bad-500/30",
-  muted:  "bg-card text-text-2 border-border",
+  warn: "bg-warn-50 text-warn-700 border-warn-200 dark:bg-warn-500/15 dark:text-warn-300 dark:border-warn-500/30",
+  lime: "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-500/15 dark:text-lime-300 dark:border-lime-500/30",
+  info: "bg-info-50 text-info-700 border-info-200 dark:bg-info-500/15 dark:text-info-300 dark:border-info-500/30",
+  purple:
+    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30",
+  bad: "bg-bad-50 text-bad-700 border-bad-200 dark:bg-bad-500/15 dark:text-bad-300 dark:border-bad-500/30",
+  muted: "bg-card text-text-2 border-border",
 }
 
-function formatAmount(amount: number): string {
-  const sign = amount >= 0 ? "+" : "-"
-  const abs = Math.abs(amount).toLocaleString()
-  return `${sign}₦${abs}`
+function initialsFor(t: TTransaction): string {
+  const name =
+    t.direction === TransactionDirection.CREDIT
+      ? t.senderName
+      : t.recipientName
+  const source = name?.trim() || t.description?.trim() || t.reference
+  const parts = source.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+}
+
+function merchantFor(t: TTransaction): string {
+  if (t.description) return t.description
+  const counter =
+    t.direction === TransactionDirection.CREDIT
+      ? t.senderName
+      : t.recipientName
+  if (counter) {
+    return `${t.direction === TransactionDirection.CREDIT ? "From" : "To"} ${counter}`
+  }
+  return CATEGORY_META[t.category]?.label ?? t.reference
+}
+
+function channelFor(t: TTransaction): string {
+  return (
+    (t.direction === TransactionDirection.CREDIT
+      ? t.senderBankName
+      : t.recipientBankName) ?? t.provider
+  )
+}
+
+function captionFor(
+  t: TTransaction,
+  recurringRefs: Set<string>,
+): { kind: CaptionKind; text: string } {
+  if (t.status === TransactionStatus.FAILED) {
+    return { kind: "anomaly", text: "Failed · review" }
+  }
+  if (recurringRefs.has(t.reference)) {
+    return { kind: "recurring", text: "Recurring · detected" }
+  }
+  if (t.direction === TransactionDirection.CREDIT) {
+    return { kind: "income", text: "Income" }
+  }
+  return { kind: "ai", text: "Auto-tagged" }
+}
+
+function signedAmount(t: TTransaction): number {
+  return t.direction === TransactionDirection.CREDIT ? t.amount : -t.amount
 }
 
 export function RecentActivityTable() {
+  const { data, isLoading, error } = useEndpoint("/transactions?recent=true", () =>
+    getTransactions({ limit: 12 }),
+  )
+  const recurringQuery = useEndpoint("/analysis/recurring", getRecurring)
+
+  const transactions = data?.items ?? []
+  const recurringCounterparties = useMemo(
+    () =>
+      new Set<string>(
+        recurringQuery.data?.value?.patterns.map((p) => p.counterparty) ?? [],
+      ),
+    [recurringQuery.data?.value?.patterns],
+  )
+
+  const rows = useMemo(
+    () =>
+      transactions.map((t) => ({
+        t,
+        caption: captionFor(t, recurringCounterparties),
+      })),
+    [transactions, recurringCounterparties],
+  )
+
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -168,7 +166,7 @@ export function RecentActivityTable() {
           Recent activity
         </h3>
         <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
-          Last 7 days
+          Latest
         </Badge>
         <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
           <label className="relative flex h-9 w-full items-center rounded-full border border-border bg-background/50 px-3 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 sm:w-64">
@@ -187,60 +185,83 @@ export function RecentActivityTable() {
 
       <div className="mt-4 -mx-4 overflow-x-auto sm:-mx-5">
         <div className="min-w-[680px] px-4 sm:px-5">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                MERCHANT
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                CATEGORY
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                CHANNEL
-              </TableHead>
-              <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
-                DATE
-              </TableHead>
-              <TableHead className="text-right font-mono text-[11px] tracking-[0.16em] text-text-3">
-                AMOUNT
-              </TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ACTIVITIES.map((activity) => (
-              <ActivityRow key={activity.merchant + activity.date} activity={activity} />
-            ))}
-          </TableBody>
-        </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  MERCHANT
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  CATEGORY
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  CHANNEL
+                </TableHead>
+                <TableHead className="font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  DATE
+                </TableHead>
+                <TableHead className="text-right font-mono text-[11px] tracking-[0.16em] text-text-3">
+                  AMOUNT
+                </TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && transactions.length === 0 ? (
+                <ActivitySkeletonRows />
+              ) : transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-text-3">
+                    {error ?? "No transactions yet."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                rows.map(({ t, caption }) => (
+                  <ActivityRow
+                    key={t.id}
+                    t={t}
+                    caption={caption}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
   )
 }
 
-function ActivityRow({ activity }: { activity: Activity }) {
-  const CaptionIcon = CAPTION_ICON[activity.caption.kind]
+function ActivityRow({
+  t,
+  caption,
+}: {
+  t: TTransaction
+  caption: { kind: CaptionKind; text: string }
+}) {
+  const Icon = CAPTION_ICON[caption.kind]
+  const meta = CATEGORY_META[t.category]
+  const amount = signedAmount(t)
+  const formatted = `${amount >= 0 ? "+" : "-"}${formatNaira(Math.abs(amount))}`
   return (
     <TableRow>
       <TableCell>
         <div className="flex items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-semibold text-text-2">
-            {activity.initials}
+            {initialsFor(t)}
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-foreground">
-              {activity.merchant}
+              {merchantFor(t)}
             </div>
             <div
               className={cn(
                 "mt-0.5 flex items-center gap-1 truncate text-xs",
-                CAPTION_COLOR[activity.caption.kind],
+                CAPTION_COLOR[caption.kind],
               )}
             >
-              {CaptionIcon && <CaptionIcon className="size-3" />}
-              {activity.caption.text}
+              {Icon && <Icon className="size-3" />}
+              {caption.text}
             </div>
           </div>
         </div>
@@ -249,26 +270,26 @@ function ActivityRow({ activity }: { activity: Activity }) {
         <span
           className={cn(
             "inline-flex h-7 items-center rounded-md border px-2.5 text-xs font-medium",
-            CATEGORY_BG[activity.category.tone],
+            CATEGORY_BG[meta.tone],
           )}
         >
-          {activity.category.label}
+          {meta.label}
         </span>
       </TableCell>
-      <TableCell className="text-sm text-text-2">{activity.channel}</TableCell>
-      <TableCell className="text-sm text-text-2">{activity.date}</TableCell>
+      <TableCell className="text-sm text-text-2">{channelFor(t)}</TableCell>
+      <TableCell className="text-sm text-text-2">
+        {formatSmartDate(new Date(t.processedAt ?? t.createdAt))}
+      </TableCell>
       <TableCell
         className={cn(
           "text-right font-display text-sm font-semibold tabular-nums",
-          activity.amount > 0
-            ? "text-lime-600 dark:text-lime-400"
-            : "text-foreground",
+          amount > 0 ? "text-lime-600 dark:text-lime-400" : "text-foreground",
         )}
       >
-        {formatAmount(activity.amount)}
+        {formatted}
       </TableCell>
       <TableCell>
-        {activity.needsReview ? (
+        {t.status === TransactionStatus.FAILED ? (
           <Badge variant="warn" className="h-7 px-2.5 text-xs">
             Review
           </Badge>
@@ -284,5 +305,38 @@ function ActivityRow({ activity }: { activity: Activity }) {
         )}
       </TableCell>
     </TableRow>
+  )
+}
+
+function ActivitySkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <TableRow key={i}>
+          <TableCell>
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-9 rounded-full" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-7 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-3 w-20" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-3 w-24" />
+          </TableCell>
+          <TableCell className="text-right">
+            <Skeleton className="ml-auto h-4 w-20" />
+          </TableCell>
+          <TableCell />
+        </TableRow>
+      ))}
+    </>
   )
 }

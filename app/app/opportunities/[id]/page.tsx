@@ -1,7 +1,12 @@
+"use client"
+
+import { use, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Bookmark, Check, Share2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { CopilotSays } from "@/components/dashboard/detail/copilot-says"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DetailHeader } from "@/components/dashboard/detail/detail-header"
 import { DetailRail } from "@/components/dashboard/detail/detail-rail"
 import { WhyCard, type WhyReason } from "@/components/dashboard/detail/why-card"
@@ -15,44 +20,161 @@ import {
   CostBreakdownCard,
   EstimatedForYouCard,
 } from "@/components/dashboard/opportunities/detail/loan-summary"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import {
+  getOpportunity,
+  saveOpportunity,
+  unsaveOpportunity,
+  type TOpportunity,
+} from "@/api/opportunities"
+import { OpportunitySource } from "@/lib/enum"
+import { constructErrorMessage } from "@/api/functions"
 
-const REASONS: ReadonlyArray<WhyReason> = [
-  {
-    label: "Cash-flow alignment",
-    percent: 96,
-    description: "Your daily takings cover the daily-amortizing repayment 6.4× over.",
-  },
-  {
-    label: "Sector resilience",
-    percent: 92,
-    description: "Lagos textiles · low default cohort (1.8% in last 12 mo).",
-  },
-  {
-    label: "Trust & tier",
-    percent: 88,
-    description: "Gold tier · 9 weeks stable income · score 82.",
-  },
-  {
-    label: "Repayment cadence fit",
-    percent: 84,
-    description: "Mon–Sat amortization avoids your softest income day (Sun).",
-  },
-]
+function parseId(raw: string): { source: OpportunitySource; id: string } | null {
+  const decoded = decodeURIComponent(raw)
+  const idx = decoded.indexOf(":")
+  if (idx === -1) return null
+  const sourceCandidate = decoded.slice(0, idx).toUpperCase() as OpportunitySource
+  if (!Object.values(OpportunitySource).includes(sourceCandidate)) return null
+  return { source: sourceCandidate, id: decoded }
+}
 
-export default function OpportunityDetailPage() {
+function reasonsFor(opp: TOpportunity): WhyReason[] {
+  return [
+    {
+      label: "Cash-flow alignment",
+      percent: Math.min(99, opp.matchPercent + 4),
+      description:
+        opp.aiRationale ??
+        "Distributions/repayments line up with your strongest weekly income window.",
+    },
+    {
+      label: "Risk fit",
+      percent: Math.max(40, opp.matchPercent - 4),
+      description: opp.stats.risk
+        ? `Risk profile: ${opp.stats.risk}`
+        : "Inside your recommended risk envelope.",
+    },
+    {
+      label: "Tier match",
+      percent: opp.matchPercent,
+      description: `${opp.source.toLowerCase()} · ${opp.type}`,
+    },
+    {
+      label: "Provider trust",
+      percent: opp.provider.verified ? 92 : 70,
+      description: opp.provider.verified
+        ? `${opp.provider.name} · verified provider`
+        : `${opp.provider.name}`,
+    },
+  ]
+}
+
+function ctaLabelFor(source: OpportunitySource): string {
+  switch (source) {
+    case OpportunitySource.LOAN:
+      return "Apply now"
+    case OpportunitySource.INVESTMENT:
+      return "Allocate"
+    case OpportunitySource.GRANT:
+      return "Express interest"
+  }
+}
+
+export default function OpportunityDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id: rawId } = use(params)
+  const router = useRouter()
+  const parsed = useMemo(() => parseId(rawId), [rawId])
+  const cacheKey = parsed ? `/opportunities/${parsed.source}/${parsed.id}` : null
+
+  const { data, isLoading, error } = useEndpoint(cacheKey, () =>
+    getOpportunity(parsed!.source, parsed!.id),
+  )
+  const [saved, setSaved] = useState<boolean | null>(null)
+  const [savingPending, setSavingPending] = useState(false)
+
+  if (!parsed) {
+    return (
+      <div className="px-4 py-12 sm:px-6 lg:px-8">
+        <h1 className="font-display text-2xl font-semibold text-foreground">
+          Opportunity not found.
+        </h1>
+      </div>
+    )
+  }
+
+  if (!data && isLoading) {
+    return <DetailSkeleton />
+  }
+  if (!data) {
+    return (
+      <div className="px-4 py-12 sm:px-6 lg:px-8">
+        <h1 className="font-display text-2xl font-semibold text-foreground">
+          Opportunity not found.
+        </h1>
+        <p className="mt-2 text-text-3">{error ?? "Please try again."}</p>
+      </div>
+    )
+  }
+
+  const isSaved = saved ?? data.isSaved
+
+  async function toggleSave() {
+    if (savingPending) return
+    setSavingPending(true)
+    try {
+      if (isSaved) {
+        await unsaveOpportunity(parsed!.source, parsed!.id)
+        setSaved(false)
+      } else {
+        await saveOpportunity(parsed!.source, parsed!.id)
+        setSaved(true)
+      }
+    } catch (e) {
+      const message = constructErrorMessage(
+        e as TApiErrorResponseType,
+        "Couldn't update your saved list.",
+      )
+      toast.error(message)
+    } finally {
+      setSavingPending(false)
+    }
+  }
+
+  function handlePrimary() {
+    if (parsed!.source === OpportunitySource.LOAN) {
+      router.push("/app/loans")
+    } else if (parsed!.source === OpportunitySource.INVESTMENT) {
+      router.push("/app/investments")
+    } else {
+      toast.info("We'll reach out within 1 business day.")
+    }
+  }
+
   return (
     <>
       <DetailHeader
         backHref="/app/opportunities"
         breadcrumb={[
           { label: "Opportunities", href: "/app/opportunities" },
-          { label: "Loans" },
-          { label: "SquadCapital · Working Capital" },
+          { label: data.type },
+          { label: data.title },
         ]}
         actions={
           <>
-            <Button variant="outline" size="lg" className="h-9 gap-2 rounded-full">
-              <Bookmark /> Save
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={toggleSave}
+              disabled={savingPending}
+              className="h-9 gap-2 rounded-full"
+            >
+              <Bookmark className={isSaved ? "fill-current" : ""} />
+              {isSaved ? "Saved" : "Save"}
             </Button>
             <Button variant="outline" size="lg" className="h-9 gap-2 rounded-full">
               <Share2 /> Share
@@ -67,40 +189,40 @@ export default function OpportunityDetailPage() {
             <header className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex h-7 items-center rounded-md border border-lime-200 bg-lime-50 px-2.5 text-xs font-medium text-lime-700 dark:border-lime-500/30 dark:bg-lime-500/15 dark:text-lime-300">
-                  Loan
+                  {data.source}
                 </span>
                 <span className="inline-flex h-7 items-center rounded-md border border-warn-200 bg-warn-50 px-2.5 text-xs font-medium text-warn-700 dark:border-warn-500/30 dark:bg-warn-500/15 dark:text-warn-300">
-                  Working capital
+                  {data.type}
                 </span>
-                <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-good-200 bg-good-50 px-2.5 text-xs font-medium text-good-700 dark:border-good-500/30 dark:bg-good-500/15 dark:text-good-300">
-                  <Check className="size-3" />
-                  Verified provider
-                </span>
+                {data.provider.verified && (
+                  <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-good-200 bg-good-50 px-2.5 text-xs font-medium text-good-700 dark:border-good-500/30 dark:bg-good-500/15 dark:text-good-300">
+                    <Check className="size-3" />
+                    Verified provider
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1.5 text-xs text-text-2">
                   <span className="size-1.5 rounded-full bg-lime-500" />
-                  96% AI match
+                  {data.matchPercent}% AI match
                 </span>
               </div>
 
               <h1 className="font-display text-3xl font-semibold leading-[1.1] tracking-[-0.02em] text-foreground sm:text-4xl lg:text-5xl">
-                SquadCapital · Working Capital Loan
+                {data.title}
               </h1>
               <p className="max-w-3xl text-base leading-relaxed text-text-2">
-                A daily-amortizing line of credit built for daily-cash businesses.
-                Repayments are auto-debited from your Trace wallet on settlement,
-                sized to the buffer Copilot sees in your cash flow.
+                {data.description}
               </p>
 
               <div className="flex items-center gap-3 pt-1">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-neutral-950 font-mono text-xs font-semibold text-white">
-                  SQ
+                  {data.provider.initials}
                 </span>
                 <div>
                   <div className="text-sm font-semibold text-foreground">
-                    SquadCapital
+                    {data.provider.name}
                   </div>
                   <div className="text-xs text-text-3">
-                    Lender · CBN-licensed · 4.7★ (1,224 borrowers)
+                    {data.source.toLowerCase()} provider
                   </div>
                 </div>
               </div>
@@ -108,54 +230,58 @@ export default function OpportunityDetailPage() {
 
             <WhyCard
               badgeLabel="Why Copilot picked this"
-              caption="Trained on your last 90 days · auditable"
-              quote={`"Your trading days line up with the daily amortization plan. Every weekday in the last 9 weeks, your Mon-PM balance covered the proposed daily debit by at least 2.4×."`}
-              reasons={REASONS}
+              caption={data.aiRationale ?? "Ranked by your behaviour, not your demographics."}
+              reasons={reasonsFor(data)}
             />
 
-            <OpportunitySimulator />
+            <OpportunitySimulator opportunity={data} />
             <AffordabilityForecast />
           </main>
 
           <div className="min-w-0 space-y-6">
-            <EstimatedForYouCard />
-            <CostBreakdownCard />
-            <DocumentsCard />
-            <CommonQuestionsCard />
+            <EstimatedForYouCard opportunity={data} />
+            <CostBreakdownCard opportunity={data} />
+            <DocumentsCard opportunity={data} />
+            <CommonQuestionsCard opportunity={data} />
           </div>
 
           <div className="min-w-0">
             <div className="xl:sticky xl:top-6">
               <DetailRail
-                label="APPLY"
-                hero="₦1,200,000"
-                heroCaption="net of ₦12,000 origination"
+                label={ctaLabelFor(data.source).toUpperCase()}
+                hero={data.stats.return ?? data.stats.min ?? "—"}
+                heroCaption={data.aiRationale ?? data.description}
                 stats={[
-                  { label: "You'll receive", value: "₦1,200,000" },
-                  { label: "Daily repayment", value: "₦7,548" },
-                  { label: "Tenor", value: "6 months · 156 debits" },
-                  { label: "First debit", value: "Mon, 11 May · 6:00pm" },
-                  { label: "Disburse to", value: "Trace wallet · 8024 567 1925" },
+                  { label: "Return", value: data.stats.return ?? "—" },
+                  { label: "Risk", value: data.stats.risk ?? "—" },
+                  { label: "Min", value: data.stats.min ?? "—" },
+                  { label: "Tenor", value: data.stats.tenor ?? "—" },
+                  { label: "Provider", value: data.provider.name },
                 ]}
                 copilotInsight={
-                  <>
-                    Take{" "}
-                    <span className="font-semibold text-foreground">₦1.2M</span>{" "}
-                    (not the full ₦1.8M) — keeps your trust score above 80 and
-                    lifts you to{" "}
-                    <span className="font-semibold text-foreground">Platinum</span>{" "}
-                    3 weeks sooner.
-                  </>
+                  <>{data.aiRationale ?? data.description}</>
                 }
-                trust="CBN-licensed · NDPR-secured. Your data is never sold."
-                primaryLabel="Apply in 4 minutes →"
+                trust="Trace-vetted. We never sell your data."
+                primaryLabel={ctaLabelFor(data.source)}
                 secondaryLabel="Talk to Copilot first"
-                footer="Submitting won't impact your trust score. Approval decision in ~4 minutes — no callbacks, no paperwork."
+                footer="Submitting won't impact your trust score."
+                onPrimary={handlePrimary}
               />
             </div>
           </div>
         </div>
       </div>
     </>
+  )
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+      <Skeleton className="h-10 w-2/3" />
+      <Skeleton className="mt-3 h-4 w-3/4" />
+      <Skeleton className="mt-2 h-4 w-1/2" />
+      <Skeleton className="mt-6 h-32 w-full" />
+    </div>
   )
 }

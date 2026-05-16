@@ -1,19 +1,40 @@
-import { Check } from "lucide-react"
+"use client"
 
-import { Button } from "@/components/ui/button"
+import { useCallback, useEffect, useRef } from "react"
+import { Sparkles } from "lucide-react"
+
+import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
-import { CashFlowMini } from "@/components/dashboard/copilot/cash-flow-mini"
 import { ChatComposer } from "@/components/dashboard/copilot/chat-composer"
 import { ChatMessage } from "@/components/dashboard/copilot/chat-message"
 import { CopilotContextRail } from "@/components/dashboard/copilot/copilot-context-rail"
-
-const SUGGESTIONS = [
-  "Take ₦1.2M instead of ₦1.8M to keep score above 80",
-  "Schedule repayments on Mondays — your softest day for income",
-  "Auto-set ₦12k weekly to a buffer wallet",
-] as const
+import useCopilotStore from "@/stores/copilot-store"
 
 export default function CopilotPage() {
+  const messages = useCopilotStore((s) => s.messages)
+  const isLoading = useCopilotStore((s) => s.isLoading)
+  const isSending = useCopilotStore((s) => s.isSending)
+  const error = useCopilotStore((s) => s.error)
+  const hasFetched = useCopilotStore((s) => s.hasFetched)
+  const fetchMessages = useCopilotStore((s) => s.fetchMessages)
+  const sendMessage = useCopilotStore((s) => s.sendMessage)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!hasFetched) fetchMessages()
+  }, [hasFetched, fetchMessages])
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages.length, isSending])
+
+  const handleSubmit = useCallback(
+    async (content: string) => {
+      await sendMessage(content)
+    },
+    [sendMessage],
+  )
+
   return (
     <DashboardPage
       title="Financial Copilot"
@@ -22,69 +43,71 @@ export default function CopilotPage() {
       <div className="-mx-4 -my-5 grid sm:-mx-6 sm:-my-6 lg:-mx-8 lg:-my-8 lg:grid-cols-[1fr_minmax(280px,360px)]">
         <div className="flex min-h-[calc(100svh-9rem)] flex-col px-4 pb-6 pt-2 sm:px-6 lg:px-12 lg:pb-8 lg:pt-4">
           <div className="flex-1 space-y-6 pb-6">
-            <ChatMessage role="user">
-              Can I afford a ₦1.2M loan right now?
-            </ChatMessage>
-
-            <ChatMessage role="assistant">
-              <p>
-                Yes — comfortably. At Gold tier (14.5% APR, 6 months) your
-                weekly repayment of{" "}
-                <span className="font-semibold text-foreground">₦52,840</span>{" "}
-                sits inside your average free cash-flow with a{" "}
-                <span className="font-semibold text-lime-600 dark:text-lime-400">
-                  24% buffer
+            {isLoading && messages.length === 0 ? (
+              <ChatSkeleton />
+            ) : messages.length === 0 ? (
+              <EmptyState />
+            ) : (
+              messages.map((m) => (
+                <ChatMessage
+                  key={m.id}
+                  role={m.role === "USER" ? "user" : "assistant"}
+                >
+                  {m.content}
+                </ChatMessage>
+              ))
+            )}
+            {isSending && (
+              <ChatMessage role="assistant">
+                <span className="inline-flex items-center gap-2 text-text-3">
+                  <Sparkles className="size-3.5 animate-pulse text-lime-500" />
+                  Thinking…
                 </span>
-                .
-              </p>
-
-              <CashFlowMini />
-
-              <div>
-                <p className="text-foreground">I&rsquo;d suggest:</p>
-                <ul className="mt-2 space-y-1.5">
-                  {SUGGESTIONS.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-lime-500" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </ChatMessage>
-
-            <ChatMessage role="user">
-              What if I go for ₦1.5M instead?
-            </ChatMessage>
-
-            <ChatMessage role="assistant">
-              <p>
-                Still safe — but tighter. Buffer drops to{" "}
-                <span className="font-semibold text-warn-600 dark:text-warn-400">
-                  9%
-                </span>
-                . In Q3 (your lean quarter) two weeks would dip below repayment.
-                I can structure it as a{" "}
-                <span className="font-semibold text-foreground">step-up plan</span>
-                : 4 light weeks now, 16 normal weeks after.
-              </p>
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Button size="lg" className="h-9 rounded-full px-4 shadow-primary">
-                  Use step-up plan
-                </Button>
-                <Button variant="outline" size="lg" className="h-9 rounded-full px-4">
-                  Compare both side-by-side
-                </Button>
-              </div>
-            </ChatMessage>
+              </ChatMessage>
+            )}
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+            <div ref={endRef} />
           </div>
 
-          <ChatComposer />
+          <ChatComposer onSubmit={handleSubmit} isSending={isSending} />
         </div>
 
         <CopilotContextRail />
       </div>
     </DashboardPage>
+  )
+}
+
+function EmptyState() {
+  return (
+    <ChatMessage role="assistant">
+      <p>
+        Hi 👋 — I&rsquo;m Copilot, your financial second brain. Ask anything
+        about your money, your spending, or upcoming decisions.
+      </p>
+      <p className="text-text-3">
+        Try: <em>&ldquo;Can I afford a ₦1.2M loan right now?&rdquo;</em> ·{" "}
+        <em>&ldquo;Where did my food spend go last week?&rdquo;</em>
+      </p>
+    </ChatMessage>
+  )
+}
+
+function ChatSkeleton() {
+  return (
+    <>
+      <div className="flex justify-end">
+        <Skeleton className="h-9 w-64 rounded-2xl" />
+      </div>
+      <div className="flex gap-3">
+        <Skeleton className="size-7 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+    </>
   )
 }

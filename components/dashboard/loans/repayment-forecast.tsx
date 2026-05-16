@@ -11,51 +11,64 @@ import {
 import { Check } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
-
-type WeekRow = {
-  week: string
-  cash: number
-  pay: number
-}
-
-const WEEKS: ReadonlyArray<WeekRow> = [
-  { week: "W1",  cash: 86,  pay: 32 },
-  { week: "W2",  cash: 92,  pay: 32 },
-  { week: "W3",  cash: 110, pay: 32 },
-  { week: "W4",  cash: 116, pay: 32 },
-  { week: "W5",  cash: 102, pay: 32 },
-  { week: "W6",  cash: 78,  pay: 32 },
-  { week: "W7",  cash: 70,  pay: 32 },
-  { week: "W8",  cash: 64,  pay: 32 },
-  { week: "W9",  cash: 68,  pay: 32 },
-  { week: "W10", cash: 80,  pay: 32 },
-  { week: "W11", cash: 92,  pay: 32 },
-  { week: "W12", cash: 102, pay: 32 },
-]
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getCashFlow } from "@/api/analysis"
+import { koboToNaira } from "@/lib/money"
 
 export function RepaymentForecast() {
   const mounted = useMounted()
+  const { data, isLoading, error } = useEndpoint(
+    "/analysis/cashflow",
+    getCashFlow,
+  )
+
+  const chartData =
+    data?.weeks.map((w) => ({
+      week: w.label,
+      cash: koboToNaira(Math.max(0, w.income - w.spend)),
+      forecast: w.forecast ? koboToNaira(w.forecast) : null,
+    })) ?? []
+
+  const everyWeekPositive =
+    chartData.length > 0 && chartData.every((w) => w.cash >= 0)
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
-          12-week repayment forecast
+          {chartData.length || 12}-week cashflow forecast
         </h3>
-        <Badge variant="good" className="h-6 gap-1 px-2.5 text-[11px]">
-          <Check className="size-3" />
-          On-track in every week
-        </Badge>
+        {data && (
+          <Badge
+            variant={everyWeekPositive ? "good" : "warn"}
+            className="h-6 gap-1 px-2.5 text-[11px]"
+          >
+            {everyWeekPositive && <Check className="size-3" />}
+            {everyWeekPositive
+              ? "On-track in every week"
+              : "Some weeks dip into the red"}
+          </Badge>
+        )}
         <span className="ml-auto text-xs text-text-3">
-          Modeled from 6 months of actual cash-flow
+          Modeled from your actual cash-flow
         </span>
       </div>
 
       <div className="relative mt-5 h-[260px] w-full">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            Not enough cash-flow yet to forecast.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <BarChart
-              data={[...WEEKS]}
+              data={chartData}
               barGap={4}
               barCategoryGap={20}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
@@ -80,11 +93,10 @@ export function RepaymentForecast() {
                 maxBarSize={22}
               />
               <Bar
-                dataKey="pay"
-                fill="var(--color-neutral-200)"
+                dataKey="forecast"
+                fill="var(--color-info-500)"
                 radius={[6, 6, 0, 0]}
                 maxBarSize={22}
-                className="dark:[&_path]:fill-neutral-800"
               />
             </BarChart>
           </ResponsiveContainer>
@@ -97,8 +109,8 @@ export function RepaymentForecast() {
           Projected free cash
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-          Weekly repayment
+          <span className="size-2 rounded-full bg-info-500" />
+          Forecast
         </li>
       </ul>
     </div>

@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+
 import { AuthShell } from "@/components/auth/auth-shell"
 import {
   AlreadyBankElsewhere,
@@ -8,6 +10,8 @@ import { ProgressStrip } from "@/components/auth/progress-strip"
 import { SignUpBankForm } from "@/components/auth/sign-up-bank-form"
 import { SignUpStepper } from "@/components/auth/sign-up-stepper"
 import { SIGN_UP_STEPS, getStepIndex } from "@/components/auth/sign-up-steps"
+
+export const metadata: Metadata = { title: "Connect bank" }
 
 export default function SignUpBankPage() {
   const current = getStepIndex("bank") + 1

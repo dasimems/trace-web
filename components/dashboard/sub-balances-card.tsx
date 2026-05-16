@@ -1,23 +1,21 @@
 "use client"
 
+import { useEffect, useMemo } from "react"
 import { motion } from "motion/react"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { formatNairaCompact } from "@/lib/money"
+import useWalletStore from "@/stores/wallet-store"
+import type { TWalletPocket, TWalletPocketType } from "@/api/wallet"
 
 type SubBalanceTone = "lime" | "info" | "good"
 
-type SubBalance = {
-  label: string
-  amount: string
-  tone: SubBalanceTone
-  fillPercent: number
+const TONE_BY_TYPE: Record<TWalletPocketType, SubBalanceTone> = {
+  SPEND: "lime",
+  SAVE: "info",
+  GOAL: "good",
 }
-
-const SUB_BALANCES: ReadonlyArray<SubBalance> = [
-  { label: "Spend",                amount: "₦318,420", tone: "lime", fillPercent: 88 },
-  { label: "Save",                 amount: "₦128,790", tone: "info", fillPercent: 60 },
-  { label: "Goals · Lagos store",  amount: "₦40,000",  tone: "good", fillPercent: 22 },
-]
 
 const DOT_CLASSES: Record<SubBalanceTone, string> = {
   lime: "bg-lime-500",
@@ -31,7 +29,30 @@ const BAR_CLASSES: Record<SubBalanceTone, string> = {
   good: "bg-good-500",
 }
 
+function pocketFillPercent(pocket: TWalletPocket, maxBalance: number): number {
+  if (pocket.type === "GOAL" && pocket.targetAmount && pocket.targetAmount > 0) {
+    return Math.min(100, Math.round((pocket.balance / pocket.targetAmount) * 100))
+  }
+  if (maxBalance <= 0) return 0
+  return Math.min(100, Math.round((pocket.balance / maxBalance) * 100))
+}
+
 export function SubBalancesCard() {
+  const pockets = useWalletStore((s) => s.pockets)
+  const isLoading = useWalletStore((s) => s.isLoadingPockets)
+  const error = useWalletStore((s) => s.pocketsError)
+  const hasFetched = useWalletStore((s) => s.hasFetchedPockets)
+  const fetchPockets = useWalletStore((s) => s.fetchPockets)
+
+  useEffect(() => {
+    if (!hasFetched) fetchPockets()
+  }, [hasFetched, fetchPockets])
+
+  const maxBalance = useMemo(
+    () => pockets.reduce((acc, p) => Math.max(acc, p.balance), 0),
+    [pockets],
+  )
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -40,29 +61,56 @@ export function SubBalancesCard() {
       className="col-span-12 rounded-2xl border border-border bg-card p-6 shadow-card sm:col-span-6 xl:col-span-3"
     >
       <div className="text-sm text-text-3">Sub-balances</div>
-      <ul className="mt-4 space-y-4">
-        {SUB_BALANCES.map((entry) => (
-          <li key={entry.label} className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2 text-foreground">
-                <span className={cn("size-2 rounded-full", DOT_CLASSES[entry.tone])} />
-                {entry.label}
-              </span>
-              <span className="font-display tabular-nums text-foreground">
-                {entry.amount}
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <motion.span
-                initial={{ width: 0 }}
-                animate={{ width: `${entry.fillPercent}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className={cn("block h-full rounded-full", BAR_CLASSES[entry.tone])}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+      {pockets.length > 0 ? (
+        <ul className="mt-4 space-y-4">
+          {pockets.map((pocket) => {
+            const tone = TONE_BY_TYPE[pocket.type]
+            return (
+              <li key={pocket.id} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-foreground">
+                    <span className={cn("size-2 rounded-full", DOT_CLASSES[tone])} />
+                    {pocket.name}
+                  </span>
+                  <span className="font-display tabular-nums text-foreground">
+                    {formatNairaCompact(pocket.balance)}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <motion.span
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${pocketFillPercent(pocket, maxBalance)}%`,
+                    }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className={cn("block h-full rounded-full", BAR_CLASSES[tone])}
+                  />
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      ) : isLoading || !error ? (
+        <PocketsSkeleton />
+      ) : (
+        <p className="mt-4 text-sm text-destructive">{error}</p>
+      )}
     </motion.div>
+  )
+}
+
+function PocketsSkeleton() {
+  return (
+    <ul className="mt-4 space-y-4">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <li key={i} className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          <Skeleton className="h-1.5 w-full" />
+        </li>
+      ))}
+    </ul>
   )
 }

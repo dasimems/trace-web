@@ -1,6 +1,10 @@
+import type { Metadata } from "next"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+
+export const metadata: Metadata = { title: "Design system" }
 
 type ScaleName =
   | "lime"

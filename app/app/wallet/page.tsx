@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Download, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,8 @@ import { WalletActivityTable } from "@/components/dashboard/wallet/wallet-activi
 import { WalletBankCard } from "@/components/dashboard/wallet/wallet-bank-card"
 import { WalletCopilotCard } from "@/components/dashboard/wallet/wallet-copilot-card"
 import { WalletSubBalances } from "@/components/dashboard/wallet/wallet-sub-balances"
+
+export const metadata: Metadata = { title: "Wallet" }
 
 export default function WalletPage() {
   return (

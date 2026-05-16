@@ -8,50 +8,68 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { Check } from "lucide-react"
+import { Check, TriangleAlert } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
-
-type WeekRow = { week: string; cash: number }
-
-const WEEKS: ReadonlyArray<WeekRow> = [
-  { week: "W1",  cash: 78  },
-  { week: "W2",  cash: 96  },
-  { week: "W3",  cash: 110 },
-  { week: "W4",  cash: 82  },
-  { week: "W5",  cash: 68  },
-  { week: "W6",  cash: 56  },
-  { week: "W7",  cash: 50  },
-  { week: "W8",  cash: 58  },
-  { week: "W9",  cash: 70  },
-  { week: "W10", cash: 88  },
-  { week: "W11", cash: 102 },
-  { week: "W12", cash: 116 },
-]
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getCashFlow } from "@/api/analysis"
+import { koboToNaira } from "@/lib/money"
 
 export function AffordabilityForecast() {
   const mounted = useMounted()
+  const { data, isLoading, error } = useEndpoint(
+    "/analysis/cashflow",
+    getCashFlow,
+  )
+
+  const chartData =
+    data?.weeks.map((w) => ({
+      week: w.label,
+      cash: Math.max(0, koboToNaira(w.income - w.spend)),
+    })) ?? []
+
+  const onTrack =
+    chartData.length > 0 && chartData.every((w) => w.cash > 0)
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
-          12-week affordability forecast
+          {chartData.length || 12}-week affordability forecast
         </h3>
-        <Badge variant="good" className="h-6 gap-1 px-2.5 text-[11px]">
-          <Check className="size-3" />
-          On-track every week
-        </Badge>
+        {data ? (
+          <Badge
+            variant={onTrack ? "good" : "warn"}
+            className="h-6 gap-1 px-2.5 text-[11px]"
+          >
+            {onTrack ? (
+              <Check className="size-3" />
+            ) : (
+              <TriangleAlert className="size-3" />
+            )}
+            {onTrack ? "On-track every week" : "Some weeks are tight"}
+          </Badge>
+        ) : null}
         <span className="ml-auto text-xs text-text-3">
-          Modeled from 6 months of cash-flow
+          Modeled from your actual cash-flow
         </span>
       </div>
 
       <div className="relative mt-5 h-[220px] w-full">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            Not enough cash-flow yet to forecast.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <BarChart
-              data={[...WEEKS]}
+              data={chartData}
               barCategoryGap={18}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             >

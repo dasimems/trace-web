@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   CartesianGrid,
   Line,
@@ -10,28 +11,34 @@ import {
 } from "recharts"
 
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getCashFlow } from "@/api/analysis"
+import { koboToNaira } from "@/lib/money"
 
-type WeekPoint = {
+type ChartPoint = {
   week: string
   income: number
   spend: number
   forecast: number | null
 }
 
-const DATA: ReadonlyArray<WeekPoint> = [
-  { week: "Wk 1", income: 320, spend: 180, forecast: null  },
-  { week: "Wk 2", income: 480, spend: 320, forecast: null  },
-  { week: "Wk 3", income: 240, spend: 360, forecast: null  },
-  { week: "Wk 4", income: 690, spend: 360, forecast: null  },
-  { week: "Wk 5", income: 590, spend: 380, forecast: 410   },
-  { week: "Wk 6", income: 880, spend: 420, forecast: 500   },
-  { week: "Wk 7", income: 920, spend: 460, forecast: 540   },
-  { week: "Wk 8", income: 1180, spend: 540, forecast: 600  },
-]
-
 export function CashFlowChart() {
   const mounted = useMounted()
+  const { data, isLoading, error } = useEndpoint("/analysis/cashflow", getCashFlow)
+
+  const chartData = useMemo<ChartPoint[]>(
+    () =>
+      data?.weeks.map((w) => ({
+        week: w.label,
+        income: koboToNaira(w.income),
+        spend: koboToNaira(w.spend),
+        forecast: w.forecast ? koboToNaira(w.forecast) : null,
+      })) ?? [],
+    [data?.weeks],
+  )
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex flex-wrap items-center gap-3">
@@ -39,7 +46,7 @@ export function CashFlowChart() {
           Cash flow · Income vs spend
         </h3>
         <Badge variant="secondary" className="h-6 px-2.5 text-[11px]">
-          8 weeks
+          {chartData.length > 0 ? `${chartData.length} weeks` : "8 weeks"}
         </Badge>
         <ul className="ml-auto flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-2">
           <li className="flex items-center gap-1.5">
@@ -58,10 +65,18 @@ export function CashFlowChart() {
       </div>
 
       <div className="mt-5 h-[220px] w-full sm:h-[280px]">
-        {mounted && (
+        {!mounted || isLoading ? (
+          <Skeleton className="h-full w-full" />
+        ) : error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : chartData.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-text-3">
+            Not enough activity yet to draw cash flow.
+          </div>
+        ) : (
           <ResponsiveContainer>
             <LineChart
-              data={[...DATA]}
+              data={chartData}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             >
               <CartesianGrid

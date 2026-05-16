@@ -1,22 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "motion/react"
 import { ArrowRight, Check } from "lucide-react"
+import { Controller, useForm } from "react-hook-form"
+import { joiResolver } from "@hookform/resolvers/joi"
+import Joi from "joi"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { NubanCard } from "@/components/auth/nuban-card"
 import { PillPicker, type PillOption } from "@/components/auth/pill-picker"
 import { getNextStep } from "@/components/auth/sign-up-steps"
+import { UserCategories } from "@/lib/enum"
+import {
+  categorySchema,
+  firstNameSchema,
+  lastNameSchema,
+  middleNameSchema,
+  phoneNumberSchema,
+} from "@/lib/validation"
+import useSignUpBufferStore from "@/stores/sign-up-buffer-store"
+import useUserStore from "@/stores/user-store"
 
-type AccountTypeId = "personal" | "business" | "savings"
-
-const ACCOUNT_TYPES: ReadonlyArray<PillOption<AccountTypeId>> = [
-  { id: "personal", label: "Personal · Day-to-day"      },
-  { id: "business", label: "Business · Trader / shop"   },
-  { id: "savings",  label: "Savings · Lock for goals"   },
+const CATEGORY_OPTIONS: ReadonlyArray<PillOption<UserCategories>> = [
+  { id: UserCategories.TRADER, label: "Trader / shop owner" },
+  { id: UserCategories.FREELANCER, label: "Freelancer" },
+  { id: UserCategories.EMPLOYEE, label: "Salary earner" },
+  { id: UserCategories.STUDENT, label: "Student hustler" },
+  { id: UserCategories.SMALL_BUSINESS_OWNER, label: "Small business owner" },
 ]
 
 const NUBAN_PILLS: readonly string[] = [
@@ -24,6 +38,22 @@ const NUBAN_PILLS: readonly string[] = [
   "Receives salary & POS settlements",
   "Free virtual card on activation",
 ] as const
+
+type FormValues = {
+  firstName: string
+  lastName: string
+  middleName: string
+  phoneNumber: string
+  category: UserCategories
+}
+
+const schema = Joi.object<FormValues>({
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  middleName: middleNameSchema,
+  phoneNumber: phoneNumberSchema,
+  category: categorySchema,
+})
 
 function FieldLabel({
   htmlFor,
@@ -41,12 +71,54 @@ function FieldLabel({
 
 export function SignUpBankForm() {
   const router = useRouter()
-  const [accountType, setAccountType] = useState<AccountTypeId | null>(
-    "personal",
-  )
+  const buffered = useSignUpBufferStore((s) => s.bankStep)
+  const setBankStep = useSignUpBufferStore((s) => s.setBankStep)
+  const userEmail = useUserStore((s) => s.userDetails?.email)
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: joiResolver(schema),
+    mode: "onTouched",
+    defaultValues: {
+      firstName: buffered?.firstName ?? "",
+      lastName: buffered?.lastName ?? "",
+      middleName: buffered?.middleName ?? "",
+      phoneNumber: buffered?.phoneNumber ?? "+234",
+      category: (buffered?.category as UserCategories) ?? undefined,
+    },
+  })
+
+  useEffect(() => {
+    if (buffered) {
+      reset({
+        firstName: buffered.firstName,
+        lastName: buffered.lastName,
+        middleName: buffered.middleName,
+        phoneNumber: buffered.phoneNumber,
+        category: (buffered.category ?? undefined) as UserCategories,
+      })
+    }
+  }, [buffered, reset])
+
+  const firstName = watch("firstName")
+  const lastName = watch("lastName")
+  const previewName =
+    [firstName, lastName].filter(Boolean).join(" ").toUpperCase() || "YOUR NAME"
+
+  function onSubmit(values: FormValues) {
+    setBankStep({
+      firstName: values.firstName.trim(),
+      lastName: values.lastName.trim(),
+      middleName: values.middleName.trim(),
+      phoneNumber: values.phoneNumber.trim(),
+      category: values.category,
+    })
     const next = getNextStep("bank")
     if (next) router.push(next.path)
   }
@@ -56,57 +128,132 @@ export function SignUpBankForm() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
       className="space-y-8"
     >
       <section className="space-y-5">
         <h2 className="font-mono text-[11px] font-semibold tracking-[0.16em] text-text-3">
-          YOUR ACCOUNT DETAILS
+          YOUR DETAILS
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <FieldLabel htmlFor="account-name">Account name</FieldLabel>
+            <FieldLabel htmlFor="first-name">First name</FieldLabel>
             <Input
-              id="account-name"
-              name="account_name"
-              autoComplete="name"
-              defaultValue="Adaeze Okafor"
+              id="first-name"
+              autoComplete="given-name"
+              aria-invalid={Boolean(errors.firstName)}
               className="h-11 bg-card text-base"
+              {...register("firstName")}
             />
+            {errors.firstName && (
+              <p className="text-sm text-destructive">
+                {errors.firstName.message}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
-            <FieldLabel htmlFor="currency">Currency</FieldLabel>
-            <div className="flex h-11 items-center justify-between rounded-lg border border-input bg-card pl-3 pr-2 text-base">
-              <span className="text-foreground">Naira (NGN)</span>
-              <span className="rounded-md bg-muted px-2 py-1 text-xs text-text-3">
-                USD coming soon
-              </span>
-              <input type="hidden" name="currency" value="NGN" />
-            </div>
+            <FieldLabel htmlFor="last-name">Last name (Surname)</FieldLabel>
+            <Input
+              id="last-name"
+              autoComplete="family-name"
+              aria-invalid={Boolean(errors.lastName)}
+              className="h-11 bg-card text-base"
+              {...register("lastName")}
+            />
+            {errors.lastName && (
+              <p className="text-sm text-destructive">
+                {errors.lastName.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <FieldLabel htmlFor="middle-name">Middle name</FieldLabel>
+            <Input
+              id="middle-name"
+              autoComplete="additional-name"
+              aria-invalid={Boolean(errors.middleName)}
+              className="h-11 bg-card text-base"
+              {...register("middleName")}
+            />
+            {errors.middleName && (
+              <p className="text-sm text-destructive">
+                {errors.middleName.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <FieldLabel htmlFor="phone-number">Phone</FieldLabel>
+            <Controller
+              name="phoneNumber"
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  id="phone-number"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  aria-invalid={Boolean(errors.phoneNumber)}
+                  placeholder="+2348012345678"
+                  className="h-11 bg-card text-base"
+                />
+              )}
+            />
+            {errors.phoneNumber ? (
+              <p className="text-sm text-destructive">
+                {errors.phoneNumber.message}
+              </p>
+            ) : (
+              <p className="text-xs text-text-3">
+                Used by Squad for transaction alerts. International format.
+              </p>
+            )}
           </div>
         </div>
 
         <div className="space-y-3">
-          <FieldLabel htmlFor="account-type">Account type</FieldLabel>
-          <PillPicker
-            options={ACCOUNT_TYPES}
-            value={accountType}
-            onChange={setAccountType}
-            ariaLabel="Pick the kind of account you want to open"
-            name="account_type"
+          <FieldLabel htmlFor="category">I am a…</FieldLabel>
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <PillPicker
+                options={CATEGORY_OPTIONS}
+                value={field.value ?? null}
+                onChange={field.onChange}
+                ariaLabel="What kind of earner are you?"
+                name="category"
+              />
+            )}
           />
-          <p className="text-sm text-text-3">
-            You can open up to 3 sub-accounts inside the same wallet later.
-          </p>
+          {errors.category ? (
+            <p className="text-sm text-destructive">
+              {errors.category.message}
+            </p>
+          ) : (
+            <p className="text-sm text-text-3">
+              Helps Copilot tune insights to how you actually earn and spend.
+            </p>
+          )}
         </div>
+
+        {userEmail && (
+          <p className="text-xs text-text-3">
+            Signed in as{" "}
+            <span className="font-medium text-text-2">{userEmail}</span>.
+          </p>
+        )}
       </section>
 
       <NubanCard
-        accountNumber="8024567192"
-        accountName="ADAEZE OKAFOR"
+        accountNumber="0000000000"
+        accountName={previewName}
         bank="Squad / GTCO · 058"
-        status="active"
+        status="pending"
       />
 
       <ul className="flex flex-wrap gap-2">
@@ -125,17 +272,10 @@ export function SignUpBankForm() {
         <Button
           type="submit"
           size="lg"
+          disabled={isSubmitting}
           className="h-11 rounded-full px-5 shadow-primary"
         >
-          Open this account <ArrowRight />
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="h-11 rounded-full px-5"
-        >
-          Save &amp; continue later
+          Continue to identity <ArrowRight />
         </Button>
       </div>
     </motion.form>

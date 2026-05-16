@@ -1,45 +1,42 @@
 "use client"
 
 import { motion } from "motion/react"
-import { ArrowRight, AlertCircle, Check, Star } from "lucide-react"
+import { ArrowRight, AlertCircle, Check, Info, Sparkles, TriangleAlert } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useEndpoint } from "@/hooks/use-endpoint"
+import { getWeeklySummary, type TInsightTone } from "@/api/analysis"
 
-type BulletTone = "good" | "warn" | "lime"
-
-type Bullet = {
-  icon: LucideIcon
-  tone: BulletTone
-  text: React.ReactNode
+const ICON_BY_TONE: Record<TInsightTone, LucideIcon> = {
+  good: Check,
+  lime: Sparkles,
+  info: Info,
+  warn: AlertCircle,
+  bad: TriangleAlert,
 }
 
-const BULLETS: ReadonlyArray<Bullet> = [
-  {
-    icon: Check,
-    tone: "good",
-    text: <>You safely saved ₦40k of your ₦42k target</>,
-  },
-  {
-    icon: AlertCircle,
-    tone: "warn",
-    text: <>Food category breached its 8-week average</>,
-  },
-  {
-    icon: Star,
-    tone: "lime",
-    text: <>You unlocked Gold loan tier — see new offers</>,
-  },
-]
-
-const BULLET_BG: Record<BulletTone, string> = {
+const BULLET_BG: Record<TInsightTone, string> = {
   good: "bg-good-100 text-good-700 dark:bg-good-500/20 dark:text-good-300",
-  warn: "bg-warn-100 text-warn-700 dark:bg-warn-500/20 dark:text-warn-300",
   lime: "bg-lime-100 text-lime-700 dark:bg-lime-500/20 dark:text-lime-300",
+  info: "bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300",
+  warn: "bg-warn-100 text-warn-700 dark:bg-warn-500/20 dark:text-warn-300",
+  bad: "bg-bad-100 text-bad-700 dark:bg-bad-500/20 dark:text-bad-300",
 }
 
 export function WeeklyAiSummary() {
+  const { data, isLoading, error } = useEndpoint(
+    "/analysis/summary",
+    getWeeklySummary,
+  )
+
+  const updatedAgo =
+    data?.lastUpdated &&
+    formatDistanceToNow(new Date(data.lastUpdated), { addSuffix: true })
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -49,26 +46,46 @@ export function WeeklyAiSummary() {
     >
       <div className="flex items-center justify-between gap-3">
         <span className="ai-badge">Weekly AI summary</span>
-        <span className="font-mono text-[11px] tracking-wide text-text-3">
-          Generated 6m ago
-        </span>
+        {updatedAgo && (
+          <span className="font-mono text-[11px] tracking-wide text-text-3">
+            Generated {updatedAgo}
+          </span>
+        )}
       </div>
 
+      {data?.value && data.value.bullets.length > 0 ? (
+        <ResolvedSummary
+          bullets={data.value.bullets}
+          aiGenerated={data.value.aiGenerated}
+        />
+      ) : isLoading ? (
+        <SummarySkeleton />
+      ) : error ? (
+        <p className="mt-4 text-sm text-destructive">{error}</p>
+      ) : (
+        <EmptySummary />
+      )}
+    </motion.div>
+  )
+}
+
+function ResolvedSummary({
+  bullets,
+  aiGenerated,
+}: {
+  bullets: { tone: TInsightTone; text: string }[]
+  aiGenerated: boolean
+}) {
+  const headline = bullets[0]?.text ?? "Your finances at a glance."
+  return (
+    <>
       <h3 className="mt-4 font-display text-2xl font-semibold leading-snug tracking-tight text-foreground">
-        You&rsquo;re trending up — but watch the food line.
+        {headline}
       </h3>
-      <p className="mt-3 text-sm leading-relaxed text-text-2">
-        Income rose <span className="font-semibold text-foreground">18%</span>{" "}
-        with a clean Friday-Sunday peak. Food spend climbed{" "}
-        <span className="font-semibold text-warn-600 dark:text-warn-400">
-          18%
-        </span>{" "}
-        — mostly Chowdeck after 8pm.
-      </p>
 
       <ul className="mt-5 space-y-3">
-        {BULLETS.map((bullet, i) => {
-          const Icon = bullet.icon
+        {bullets.slice(1).map((bullet, i) => {
+          const Icon = ICON_BY_TONE[bullet.tone]
           return (
             <li key={i} className="flex items-start gap-2.5 text-sm">
               <span
@@ -89,10 +106,34 @@ export function WeeklyAiSummary() {
         <Button size="lg" className="h-9 rounded-full px-4 shadow-primary">
           Talk to Copilot <ArrowRight />
         </Button>
-        <Button variant="outline" size="lg" className="h-9 rounded-full px-4">
-          Read full report
-        </Button>
+        {!aiGenerated && (
+          <span className="text-xs text-text-3">
+            Heuristic mode · enable Anthropic key for richer phrasing
+          </span>
+        )}
       </div>
-    </motion.div>
+    </>
+  )
+}
+
+function EmptySummary() {
+  return (
+    <p className="mt-4 text-sm leading-relaxed text-text-3">No data yet.</p>
+  )
+}
+
+function SummarySkeleton() {
+  return (
+    <>
+      <Skeleton className="mt-4 h-8 w-3/4" />
+      <ul className="mt-5 space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <Skeleton className="size-5 rounded-full" />
+            <Skeleton className="h-4 flex-1" />
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }

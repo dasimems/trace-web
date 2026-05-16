@@ -30,7 +30,7 @@ export const NAV_SECTIONS: ReadonlyArray<NavSection> = [
       { label: "Overview",      href: "/app/overview",      icon: Home          },
       { label: "Wallet",        href: "/app/wallet",        icon: Wallet,         badge: { text: "₦", tone: "muted" } },
       { label: "Transactions",  href: "/app/transactions",  icon: ArrowLeftRight },
-      { label: "Opportunities", href: "/app/opportunities", icon: Hash,           badge: { text: "12", tone: "lime"  } },
+      { label: "Opportunities", href: "/app/opportunities", icon: Hash         },
       { label: "Loans",         href: "/app/loans",         icon: Building2     },
       { label: "Investments",   href: "/app/investments",   icon: TrendingUp    },
       { label: "Copilot",       href: "/app/copilot",       icon: MessageSquare,  badge: { text: "AI", tone: "lime"  } },

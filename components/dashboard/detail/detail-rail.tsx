@@ -21,6 +21,10 @@ type DetailRailProps = {
   primaryLabel: string
   secondaryLabel: string
   footer: string
+  onPrimary?: () => void
+  onSecondary?: () => void
+  primaryLoading?: boolean
+  primaryDisabled?: boolean
 }
 
 export function DetailRail({
@@ -33,6 +37,10 @@ export function DetailRail({
   primaryLabel,
   secondaryLabel,
   footer,
+  onPrimary,
+  onSecondary,
+  primaryLoading,
+  primaryDisabled,
 }: DetailRailProps) {
   return (
     <aside className="space-y-5">
@@ -77,10 +85,20 @@ export function DetailRail({
       </p>
 
       <div className="space-y-2">
-        <Button size="lg" className="h-12 w-full rounded-full px-5 text-sm shadow-primary">
-          {primaryLabel}
+        <Button
+          size="lg"
+          onClick={onPrimary}
+          disabled={primaryDisabled || primaryLoading}
+          className="h-12 w-full rounded-full px-5 text-sm shadow-primary"
+        >
+          {primaryLoading ? "Submitting…" : primaryLabel}
         </Button>
-        <Button variant="outline" size="lg" className="h-11 w-full rounded-full px-5 text-sm">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onSecondary}
+          className="h-11 w-full rounded-full px-5 text-sm"
+        >
           {secondaryLabel}
         </Button>
       </div>

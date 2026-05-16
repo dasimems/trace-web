@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { motion } from "motion/react"
 import { ArrowUp } from "lucide-react"
 
@@ -29,7 +30,7 @@ const STROKE_VAR: Record<TrendTone, string> = {
   bad:  "var(--color-bad-500)",
 }
 
-export function MetricTrendCard({
+function MetricTrendCardBase({
   label,
   value,
   caption,
@@ -112,3 +113,5 @@ function Sparkline({
     </svg>
   )
 }
+
+export const MetricTrendCard = memo(MetricTrendCardBase)

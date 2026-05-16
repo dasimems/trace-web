@@ -1,10 +1,14 @@
 "use client"
 
+import { useEffect } from "react"
 import { motion } from "motion/react"
 import { ArrowUpRight, CreditCard, Plus, Receipt } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { formatNaira, splitNairaParts } from "@/lib/money"
+import useWalletStore from "@/stores/wallet-store"
 
 const ACTIONS = [
   { label: "Send",    icon: ArrowUpRight, primary: false },
@@ -13,6 +17,16 @@ const ACTIONS = [
 ] as const
 
 export function WalletBalanceCard() {
+  const snapshot = useWalletStore((s) => s.snapshot)
+  const isLoading = useWalletStore((s) => s.isLoading)
+  const fetchError = useWalletStore((s) => s.fetchError)
+  const fetchWallet = useWalletStore((s) => s.fetchWallet)
+  const hasFetched = useWalletStore((s) => s.hasFetched)
+
+  useEffect(() => {
+    if (!hasFetched) fetchWallet()
+  }, [hasFetched, fetchWallet])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -27,17 +41,16 @@ export function WalletBalanceCard() {
         </Badge>
       </div>
 
-      <div className="mt-3 flex items-baseline">
-        <span className="font-display text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-          ₦487,210
-        </span>
-        <span className="font-display text-xl font-semibold tabular-nums text-text-3">
-          .40
-        </span>
-      </div>
-      <div className="mt-1 text-sm text-text-3">
-        Available to spend · Ledger ₦487,210.40
-      </div>
+      {snapshot ? (
+        <BalanceDisplay
+          available={snapshot.balance.available}
+          ledger={snapshot.balance.ledger}
+        />
+      ) : isLoading || !fetchError ? (
+        <BalanceSkeleton />
+      ) : (
+        <p className="mt-4 text-sm text-destructive">{fetchError}</p>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2">
         <Button size="lg" className="h-9 gap-1.5 rounded-full px-3.5 shadow-primary">
@@ -57,5 +70,39 @@ export function WalletBalanceCard() {
         ))}
       </div>
     </motion.div>
+  )
+}
+
+function BalanceDisplay({
+  available,
+  ledger,
+}: {
+  available: number
+  ledger: number
+}) {
+  const parts = splitNairaParts(available)
+  return (
+    <>
+      <div className="mt-3 flex items-baseline">
+        <span className="font-display text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+          {parts.whole}
+        </span>
+        <span className="font-display text-xl font-semibold tabular-nums text-text-3">
+          {parts.decimal}
+        </span>
+      </div>
+      <div className="mt-1 text-sm text-text-3">
+        Available to spend · Ledger {formatNaira(ledger)}
+      </div>
+    </>
+  )
+}
+
+function BalanceSkeleton() {
+  return (
+    <>
+      <Skeleton className="mt-3 h-10 w-48" />
+      <Skeleton className="mt-2 h-4 w-56" />
+    </>
   )
 }

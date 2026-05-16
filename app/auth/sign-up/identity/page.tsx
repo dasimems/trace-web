@@ -1,9 +1,13 @@
+import type { Metadata } from "next"
+
 import { AuthShell } from "@/components/auth/auth-shell"
 import { ProgressStrip } from "@/components/auth/progress-strip"
 import { SignUpIdentityForm } from "@/components/auth/sign-up-identity-form"
 import { SignUpStepper } from "@/components/auth/sign-up-stepper"
 import { SIGN_UP_STEPS, getStepIndex } from "@/components/auth/sign-up-steps"
 import { TierPreview } from "@/components/auth/tier-preview"
+
+export const metadata: Metadata = { title: "Identity" }
 
 export default function SignUpIdentityPage() {
   const current = getStepIndex("identity") + 1

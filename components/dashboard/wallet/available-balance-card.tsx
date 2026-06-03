@@ -17,7 +17,7 @@ import type { LucideIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatNaira, splitNairaParts } from "@/lib/money"
+import { formatPrice, splitPriceParts, type TPrice } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
 import useWalletActionsStore from "@/stores/wallet-actions-store"
 
@@ -45,9 +45,13 @@ export function AvailableBalanceCard() {
   }, [hasFetched, fetchWallet])
 
   const balance = snapshot?.balance
-  const todayNet = balance ? balance.todayInflow - balance.todayOutflow : 0
+  const todayNet = balance
+    ? balance.todayInflow.amount - balance.todayOutflow.amount
+    : 0
+  const todayCurrency =
+    balance?.todayInflow.currency.symbol ?? "₦"
   const todayLabel = balance
-    ? `${todayNet >= 0 ? "+" : ""}${formatNaira(todayNet)} today`
+    ? `${todayNet >= 0 ? "+" : ""}${todayCurrency}${Math.abs(todayNet).toLocaleString(balance.todayInflow.currency.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} today`
     : null
 
   const actions: ReadonlyArray<Action> = [
@@ -145,11 +149,11 @@ function BalanceDisplay({
   ledger,
   pending,
 }: {
-  available: number
-  ledger: number
-  pending: number
+  available: TPrice
+  ledger: TPrice
+  pending: TPrice
 }) {
-  const parts = splitNairaParts(available)
+  const parts = splitPriceParts(available)
   return (
     <>
       <div className="mt-3 flex items-baseline">
@@ -161,7 +165,7 @@ function BalanceDisplay({
         </span>
       </div>
       <div className="mt-2 text-sm text-text-3">
-        Ledger {formatNaira(ledger)} · Pending {formatNaira(pending)}
+        Ledger {formatPrice(ledger)} · Pending {formatPrice(pending)}
       </div>
     </>
   )

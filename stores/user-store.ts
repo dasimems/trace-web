@@ -1,6 +1,7 @@
 import { getData } from "@/api";
 import { constructErrorMessage } from "@/api/functions";
 import { UserGenders, UserRoles } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 import useWalletStore from "@/stores/wallet-store";
 import { create } from "zustand";
 import {
@@ -17,7 +18,7 @@ export type TBankAccount = {
   customerIdentifier: string;
   beneficiaryAccount?: string | null;
   provider: string;
-  balance: number;
+  balance: TPrice;
   createdAt?: Date;
   updatedAt?: Date;
 };

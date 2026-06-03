@@ -5,14 +5,14 @@ import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { useSse } from "@/hooks/use-sse"
-import { formatNairaWhole } from "@/lib/money"
+import { formatPrice, type TPrice } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
 
 type WalletCreditReceivedPayload = {
   transactionId: string
   reference: string
-  amount: number
-  balance: number
+  amount: TPrice
+  balance: TPrice
   senderName: string | null
   senderAccountNumber: string | null
   senderBank: string | null
@@ -49,16 +49,16 @@ export function useWalletStream({ enabled = true } = {}) {
         ) as WalletEvent<WalletCreditReceivedPayload>
         const { amount, senderName } = parsed.payload
         toast.success(
-          `${formatNairaWhole(amount)} received${senderName ? ` from ${senderName}` : ""}`,
+          `${formatPrice(amount)} received${senderName ? ` from ${senderName}` : ""}`,
         )
         refreshWalletSurfaces()
       },
       "wallet.fund.received": (event: MessageEvent<string>) => {
         const parsed = JSON.parse(event.data) as WalletEvent<{
-          amount: number
+          amount: TPrice
         }>
         toast.success(
-          `${formatNairaWhole(parsed.payload.amount)} added to your wallet.`,
+          `${formatPrice(parsed.payload.amount)} added to your wallet.`,
         )
         refreshWalletSurfaces()
       },
@@ -78,10 +78,10 @@ export function useWalletStream({ enabled = true } = {}) {
       },
       "wallet.payment_request.paid": (event: MessageEvent<string>) => {
         const parsed = JSON.parse(event.data) as WalletEvent<{
-          amount: number
+          amount: TPrice
         }>
         toast.success(
-          `Payment request paid · ${formatNairaWhole(parsed.payload.amount)}`,
+          `Payment request paid · ${formatPrice(parsed.payload.amount)}`,
         )
         refreshWalletSurfaces()
       },

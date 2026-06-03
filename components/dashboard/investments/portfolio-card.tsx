@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getPortfolio } from "@/api/investments"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 const TONE_CYCLE = [
   { fill: "var(--color-lime-500)",   dot: "bg-lime-500"   },
@@ -42,7 +42,7 @@ export function PortfolioCard() {
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
       <div className="flex items-center gap-2">
         <h3 className="font-display text-base font-semibold text-foreground">
-          {data ? `Your portfolio · ${formatNairaCompact(data.totalValue)}` : "Your portfolio"}
+          {data ? `Your portfolio · ${formatPriceCompact(data.totalValue)}` : "Your portfolio"}
         </h3>
         {returnPercent && (
           <Badge
@@ -89,7 +89,7 @@ export function PortfolioCard() {
             )}
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-display text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                {data ? formatNairaCompact(data.totalValue) : ""}
+                {data ? formatPriceCompact(data.totalValue) : ""}
               </span>
               <span className="font-mono text-[10px] tracking-[0.16em] text-text-3">
                 PORTFOLIO
@@ -110,7 +110,7 @@ export function PortfolioCard() {
                   <span className="truncate">{holding.label}</span>
                 </span>
                 <span className="font-display tabular-nums text-foreground">
-                  {formatNairaCompact(holding.amount)}
+                  {formatPriceCompact(holding.amount)}
                 </span>
                 <Badge variant="secondary" className="h-5 px-2 text-[11px]">
                   {Math.round(holding.percent)}%

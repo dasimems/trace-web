@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getTransactions, type TTransaction } from "@/api/transactions"
-import { formatNaira } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 import { formatSmartDate } from "@/lib/functions"
 import {
   TransactionCategory,
@@ -87,7 +87,9 @@ function captionFor(t: TTransaction): string {
 }
 
 function signedAmount(t: TTransaction): number {
-  return t.direction === TransactionDirection.CREDIT ? t.amount : -t.amount
+  return t.direction === TransactionDirection.CREDIT
+    ? t.amount.amount
+    : -t.amount.amount
 }
 
 export function WalletActivityTable() {
@@ -165,7 +167,7 @@ export function WalletActivityTable() {
 function ActivityRow({ t }: { t: TTransaction }) {
   const meta = typeMetaFor(t)
   const amount = signedAmount(t)
-  const formatted = `${amount >= 0 ? "+" : "-"}${formatNaira(Math.abs(amount))}`
+  const formatted = `${amount >= 0 ? "+" : "-"}${formatPrice(t.amount)}`
   return (
     <TableRow>
       <TableCell>

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getSpendHeatmap, type TSpendHeatmapCell } from "@/api/analysis"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 const DAYS = 7
 const HOURS = 24
@@ -33,8 +33,8 @@ function buildGrid(cells: TSpendHeatmapCell[]): {
   const grid = Array.from({ length: DAYS }, () => new Array(HOURS).fill(0)) as number[][]
   let max = 0
   for (const cell of cells) {
-    grid[cell.dayOfWeek][cell.hour] = cell.amount
-    if (cell.amount > max) max = cell.amount
+    grid[cell.dayOfWeek][cell.hour] = cell.amount.amount
+    if (cell.amount.amount > max) max = cell.amount.amount
   }
   return { grid, max }
 }
@@ -51,7 +51,7 @@ export function SpendingHeatmap() {
   )
 
   const peakLabel = data?.peakCell
-    ? `Peak ${DAY_LABELS[data.peakCell.dayOfWeek]} ${String(data.peakCell.hour).padStart(2, "0")}:00 · ${formatNairaCompact(data.peakCell.amount)}`
+    ? `Peak ${DAY_LABELS[data.peakCell.dayOfWeek]} ${String(data.peakCell.hour).padStart(2, "0")}:00 · ${formatPriceCompact(data.peakCell.amount)}`
     : null
 
   return (
@@ -91,7 +91,7 @@ export function SpendingHeatmap() {
                     }}
                     title={
                       amount > 0
-                        ? `${DAY_LABELS[day]} ${String(hour).padStart(2, "0")}:00 · ${formatNairaCompact(amount)}`
+                        ? `${DAY_LABELS[day]} ${String(hour).padStart(2, "0")}:00 · ₦${new Intl.NumberFormat("en-NG", { notation: "compact", maximumFractionDigits: 1 }).format(amount)}`
                         : undefined
                     }
                     className={cn(

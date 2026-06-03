@@ -8,7 +8,7 @@ import type { LucideIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatNaira, splitNairaParts } from "@/lib/money"
+import { formatPrice, splitPriceParts, type TPrice } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
 import useWalletActionsStore from "@/stores/wallet-actions-store"
 
@@ -112,10 +112,10 @@ function BalanceDisplay({
   available,
   ledger,
 }: {
-  available: number
-  ledger: number
+  available: TPrice
+  ledger: TPrice
 }) {
-  const parts = splitNairaParts(available)
+  const parts = splitPriceParts(available)
   return (
     <>
       <div className="mt-3 flex items-baseline">
@@ -127,7 +127,7 @@ function BalanceDisplay({
         </span>
       </div>
       <div className="mt-1 text-sm text-text-3">
-        Available to spend · Ledger {formatNaira(ledger)}
+        Available to spend · Ledger {formatPrice(ledger)}
       </div>
     </>
   )

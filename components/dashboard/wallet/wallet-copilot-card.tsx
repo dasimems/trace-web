@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCopilotContext, type TCopilotContext } from "@/api/copilot"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 export function WalletCopilotCard() {
   const { data, isLoading, error } = useEndpoint(
@@ -75,7 +75,7 @@ function Resolved({ context }: { context: TCopilotContext }) {
             >
               <span>{o.label}</span>
               <span className="font-display tabular-nums text-foreground">
-                {formatNairaCompact(o.amount)}
+                {formatPriceCompact(o.amount)}
               </span>
             </li>
           ))}

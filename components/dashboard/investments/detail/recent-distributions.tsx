@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getDistributions } from "@/api/investments"
-import { formatNaira, formatNairaCompact } from "@/lib/money"
+import { formatPrice, formatPriceCompact } from "@/lib/money"
 
 const TYPE_LABEL: Record<string, string> = {
   DIVIDEND: "Dividend",
@@ -29,9 +29,10 @@ export function RecentDistributions({ productId }: { productId: string }) {
 
   const distributions = data?.distributions ?? []
   const aggregatePaid = useMemo(
-    () => distributions.reduce((acc, d) => acc + d.totalPaid, 0),
+    () => distributions.reduce((acc, d) => acc + d.totalPaid.amount, 0),
     [distributions],
   )
+  const aggregateCurrency = distributions[0]?.totalPaid.currency
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -61,7 +62,7 @@ export function RecentDistributions({ productId }: { productId: string }) {
               </span>
               <span className="font-display text-sm tabular-nums text-foreground">
                 <span className="text-lime-600 dark:text-lime-400">
-                  +{formatNaira(d.amountPerUnit)}
+                  +{formatPrice(d.amountPerUnit)}
                 </span>
                 <span className="ml-1 text-text-3">/ unit</span>
               </span>
@@ -76,9 +77,11 @@ export function RecentDistributions({ productId }: { productId: string }) {
         </ul>
       )}
 
-      {distributions.length > 0 && (
+      {distributions.length > 0 && aggregateCurrency && (
         <p className="mt-3 text-xs text-text-3">
-          Aggregate paid: {formatNairaCompact(aggregatePaid)} across the fund
+          Aggregate paid:{" "}
+          {`${aggregateCurrency.symbol}${new Intl.NumberFormat(aggregateCurrency.locale, { notation: "compact", maximumFractionDigits: 1 }).format(aggregatePaid)}`}{" "}
+          across the fund
         </p>
       )}
     </div>

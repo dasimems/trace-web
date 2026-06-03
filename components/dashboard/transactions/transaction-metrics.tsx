@@ -10,7 +10,7 @@ import { getRecurring, getAnomalies, getCashFlow } from "@/api/analysis"
 import {
   getTransactionMetrics,
 } from "@/api/transactions"
-import { formatNairaWhole } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 
 function normalize(values: ReadonlyArray<number>): ReadonlyArray<number> {
   if (values.length === 0) return []
@@ -46,17 +46,17 @@ export function TransactionMetrics() {
     () =>
       recurringQuery.data?.value?.patterns
         .filter((p) => p.direction === "DEBIT")
-        .reduce((acc, p) => acc + p.averageAmount, 0) ?? 0,
+        .reduce((acc, p) => acc + p.averageAmount.amount, 0) ?? 0,
     [recurringQuery.data?.value?.patterns],
   )
   const anomaliesCount = anomaliesQuery.data?.value?.anomalies.length ?? 0
 
   const inflowSeries = useMemo(
-    () => cashFlow?.weeks.map((w) => w.income) ?? [],
+    () => cashFlow?.weeks.map((w) => w.income.amount) ?? [],
     [cashFlow?.weeks],
   )
   const outflowSeries = useMemo(
-    () => cashFlow?.weeks.map((w) => w.spend) ?? [],
+    () => cashFlow?.weeks.map((w) => w.spend.amount) ?? [],
     [cashFlow?.weeks],
   )
   const flatSeries = useMemo(
@@ -80,7 +80,7 @@ export function TransactionMetrics() {
     <>
       <MetricTrendCard
         label="Inflow this month"
-        value={formatNairaWhole(metrics.inflowThisMonth)}
+        value={formatPrice(metrics.inflowThisMonth)}
         caption={`${metrics.inflowSources} source${metrics.inflowSources === 1 ? "" : "s"}`}
         pillLabel={metrics.inflowSources > 0 ? "Live" : "—"}
         pillTone="good"
@@ -89,7 +89,7 @@ export function TransactionMetrics() {
       />
       <MetricTrendCard
         label="Outflow this month"
-        value={formatNairaWhole(metrics.outflowThisMonth)}
+        value={formatPrice(metrics.outflowThisMonth)}
         caption={`${metrics.outflowCategories} categor${metrics.outflowCategories === 1 ? "y" : "ies"}`}
         pillLabel={metrics.failedCount > 0 ? `${metrics.failedCount} failed` : "Live"}
         pillTone={metrics.failedCount > 0 ? "warn" : "good"}
@@ -102,7 +102,7 @@ export function TransactionMetrics() {
         value={String(recurringCount)}
         caption={
           recurringCommitted > 0
-            ? `${formatNairaWhole(recurringCommitted)}/mo committed`
+            ? `${recurringCommitted.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })}/mo committed`
             : "Detecting patterns…"
         }
         pillLabel={recurringQuery.data?.status === "pending" ? "Pending" : "Live"}

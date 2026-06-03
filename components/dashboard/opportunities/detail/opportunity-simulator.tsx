@@ -13,7 +13,7 @@ import {
   type TOpportunity,
 } from "@/api/opportunities"
 import { OpportunitySource } from "@/lib/enum"
-import { formatNaira, formatNairaWhole } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 
 const TENOR_DAYS = [30, 60, 90, 180, 365] as const
 
@@ -38,12 +38,15 @@ export function OpportunitySimulator({ opportunity }: Props) {
     simulateOpportunity(opportunity.source, opportunity.id, amount, tenorDays),
   )
 
-  const minAmount = 10_000_00
-  const maxAmount = 5_000_000_00
+  const minAmount = 10_000
+  const maxAmount = 5_000_000
   const fillPercent = Math.min(
     100,
     Math.max(0, ((amount - minAmount) / (maxAmount - minAmount)) * 100),
   )
+
+  const formatNairaInt = (n: number) =>
+    n.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -65,7 +68,7 @@ export function OpportunitySimulator({ opportunity }: Props) {
         <div>
           <div className="text-sm text-text-3">Amount</div>
           <div className="mt-1 font-display text-3xl font-semibold tabular-nums tracking-tight text-foreground">
-            {formatNairaWhole(amount)}
+            {formatNairaInt(amount)}
           </div>
           <div className="relative mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <motion.span
@@ -77,7 +80,7 @@ export function OpportunitySimulator({ opportunity }: Props) {
               type="range"
               min={minAmount}
               max={maxAmount}
-              step={10_000_00}
+              step={10_000}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
               className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent opacity-0"
@@ -85,8 +88,8 @@ export function OpportunitySimulator({ opportunity }: Props) {
             />
           </div>
           <div className="mt-1 flex justify-between font-mono text-[11px] text-text-3">
-            <span>{formatNairaWhole(minAmount)}</span>
-            <span>{formatNairaWhole(maxAmount)}</span>
+            <span>{formatNairaInt(minAmount)}</span>
+            <span>{formatNairaInt(maxAmount)}</span>
           </div>
         </div>
 
@@ -141,22 +144,22 @@ function SimStats({
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SimStat
             label="Daily debit"
-            value={sim.dailyPayment ? formatNaira(sim.dailyPayment) : "—"}
+            value={sim.dailyPayment ? formatPrice(sim.dailyPayment) : "—"}
             caption="Auto-debited"
           />
           <SimStat
             label="Weekly equiv."
-            value={sim.weeklyPayment ? formatNaira(sim.weeklyPayment) : "—"}
+            value={sim.weeklyPayment ? formatPrice(sim.weeklyPayment) : "—"}
             caption="6 days × debit"
           />
           <SimStat
             label="Total cost"
             value={
-              sim.totalRepayment ? formatNaira(sim.totalRepayment) : "—"
+              sim.totalRepayment ? formatPrice(sim.totalRepayment) : "—"
             }
             caption={
               sim.totalInterest
-                ? `+${formatNaira(sim.totalInterest)} interest`
+                ? `+${formatPrice(sim.totalInterest)} interest`
                 : ""
             }
           />
@@ -181,7 +184,7 @@ function SimStats({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <SimStat
           label="Projected value"
-          value={sim.projectedValue ? formatNaira(sim.projectedValue) : "—"}
+          value={sim.projectedValue ? formatPrice(sim.projectedValue) : "—"}
           caption="At maturity"
         />
         <SimStat
@@ -210,7 +213,7 @@ function SimStats({
       />
       <SimStat
         label="Amount"
-        value={formatNaira(sim.inputAmount)}
+        value={formatPrice(sim.inputAmount)}
         caption="Tested"
       />
       <SimStat
@@ -263,13 +266,13 @@ function parseNairaCompact(value: string | undefined): number | null {
   const base = parseFloat(match[1])
   const mult =
     match[2] === "m" || match[2] === "M" ? 1_000_000 : match[2] === "k" ? 1_000 : 1
-  return Math.round(base * mult * 100)
+  return Math.round(base * mult)
 }
 
 function parseInitialAmount(opp: TOpportunity): number {
   const fromMin = parseNairaCompact(opp.stats.min)
-  if (fromMin && fromMin > 0) return Math.max(fromMin, 100_000_00)
-  return 200_000_00
+  if (fromMin && fromMin > 0) return Math.max(fromMin, 100_000)
+  return 200_000
 }
 
 function parseInitialTenor(opp: TOpportunity): number {

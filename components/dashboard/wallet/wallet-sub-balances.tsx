@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
 import type { TWalletPocket, TWalletPocketType } from "@/api/wallet"
 
@@ -40,16 +40,23 @@ const FILL: Record<Tone, string> = {
 }
 
 function pocketPercent(pocket: TWalletPocket, totalBalance: number): number {
-  if (pocket.type === "GOAL" && pocket.targetAmount && pocket.targetAmount > 0) {
-    return Math.min(100, Math.round((pocket.balance / pocket.targetAmount) * 100))
+  if (
+    pocket.type === "GOAL" &&
+    pocket.targetAmount &&
+    pocket.targetAmount.amount > 0
+  ) {
+    return Math.min(
+      100,
+      Math.round((pocket.balance.amount / pocket.targetAmount.amount) * 100),
+    )
   }
   if (totalBalance <= 0) return 0
-  return Math.min(100, Math.round((pocket.balance / totalBalance) * 100))
+  return Math.min(100, Math.round((pocket.balance.amount / totalBalance) * 100))
 }
 
 function pocketMeta(pocket: TWalletPocket): string {
   if (pocket.type === "GOAL" && pocket.targetAmount) {
-    return `Target ${formatNairaCompact(pocket.targetAmount)} · updated ${
+    return `Target ${formatPriceCompact(pocket.targetAmount)} · updated ${
       pocket.updatedAt
         ? format(new Date(pocket.updatedAt), "d MMM")
         : "recently"
@@ -71,7 +78,7 @@ export function WalletSubBalances() {
   }, [hasFetched, fetchPockets])
 
   const totalBalance = useMemo(
-    () => pockets.reduce((acc, p) => acc + p.balance, 0),
+    () => pockets.reduce((acc, p) => acc + p.balance.amount, 0),
     [pockets],
   )
 
@@ -137,7 +144,7 @@ export function WalletSubBalances() {
                   </div>
                   <div className="text-right">
                     <div className="font-display text-sm font-semibold tabular-nums text-foreground">
-                      {formatNairaCompact(pocket.balance)}
+                      {formatPriceCompact(pocket.balance)}
                     </div>
                     <div className="mt-0.5 font-mono text-[11px] text-text-3">
                       {percent}%

@@ -7,7 +7,7 @@ import { format, formatDistanceToNow } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCopilotContext, type TCopilotContext } from "@/api/copilot"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 export function CopilotContextRail() {
   const { data, isLoading, error } = useEndpoint(
@@ -95,7 +95,7 @@ function ResolvedRail({ context }: { context: TCopilotContext }) {
                 <span className="flex-1">
                   <span className="font-medium text-foreground">{o.label}</span>
                   <span className="ml-2 text-text-3">
-                    {formatNairaCompact(o.amount)} ·{" "}
+                    {formatPriceCompact(o.amount)} ·{" "}
                     {formatRelative(o.dueAt)}
                   </span>
                 </span>

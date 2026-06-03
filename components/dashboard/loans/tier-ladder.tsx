@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getLoanTier } from "@/api/loans"
 import { LoanTier } from "@/lib/enum"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 type TierVisual = {
   tier: LoanTier
@@ -74,7 +74,7 @@ export function TierLadder() {
               state={stateFor(tier.tier, currentTier)}
               limit={
                 tier.tier === currentTier && data?.maxExposure
-                  ? formatNairaCompact(data.maxExposure)
+                  ? formatPriceCompact(data.maxExposure)
                   : tier.limitFallback
               }
             />

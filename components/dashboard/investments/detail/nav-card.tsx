@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getNavSnapshot, type TNavSnapshot } from "@/api/investments"
-import { formatNaira } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 
 export function NavPerUnitCard({ productId }: { productId: string }) {
   const { data, isLoading, error } = useEndpoint(
@@ -37,7 +37,7 @@ function Resolved({ snapshot }: { snapshot: TNavSnapshot }) {
   return (
     <>
       <div className="mt-1 font-display text-3xl font-semibold tabular-nums tracking-tight text-foreground">
-        {formatNaira(snapshot.navPerUnit)}
+        {formatPrice(snapshot.navPerUnit)}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <Badge

@@ -3,7 +3,7 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getLoanTier } from "@/api/loans"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 export function WhyYouQualify() {
   const { data, isLoading, error } = useEndpoint("/loans/tier", getLoanTier)
@@ -26,7 +26,7 @@ export function WhyYouQualify() {
               </span>
               . Your current limit is{" "}
               <span className="font-semibold text-foreground">
-                {formatNairaCompact(data.maxExposure)}
+                {formatPriceCompact(data.maxExposure)}
               </span>
               .
             </p>

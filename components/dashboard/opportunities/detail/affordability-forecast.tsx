@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCashFlow } from "@/api/analysis"
-import { koboToNaira } from "@/lib/money"
 
 export function AffordabilityForecast() {
   const mounted = useMounted()
@@ -27,7 +26,7 @@ export function AffordabilityForecast() {
   const chartData =
     data?.weeks.map((w) => ({
       week: w.label,
-      cash: Math.max(0, koboToNaira(w.income - w.spend)),
+      cash: Math.max(0, w.income.amount - w.spend.amount),
     })) ?? []
 
   const onTrack =

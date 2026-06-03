@@ -5,6 +5,7 @@ import {
   LoanRepaymentStatus,
   LoanTier,
 } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 
 export type TLoanProduct = {
   id: string;
@@ -12,8 +13,8 @@ export type TLoanProduct = {
   provider: string;
   type: LoanProductType;
   interestRateBps: number;
-  minAmount: number;
-  maxAmount: number;
+  minAmount: TPrice;
+  maxAmount: TPrice;
   minTenorDays: number;
   maxTenorDays: number;
   requiredTier: LoanTier;
@@ -26,16 +27,16 @@ export type TLoanTier = {
   status: "ok" | "insufficient_data";
   tier: LoanTier;
   healthScore: number;
-  maxExposure: number;
+  maxExposure: TPrice;
   reasons: string[];
 };
 
 export type TLoanAffordability = {
-  principal: number;
-  totalInterest: number;
-  totalRepayment: number;
-  dailyPayment: number;
-  weeklyPayment: number;
+  principal: TPrice;
+  totalInterest: TPrice;
+  totalRepayment: TPrice;
+  dailyPayment: TPrice;
+  weeklyPayment: TPrice;
   tenorDays: number;
   isAffordable: boolean;
 };
@@ -43,8 +44,8 @@ export type TLoanAffordability = {
 export type TLoanApplication = {
   id: string;
   productId: string;
-  requestedAmount: number;
-  approvedAmount?: number;
+  requestedAmount: TPrice;
+  approvedAmount?: TPrice;
   tenorDays: number;
   status: LoanApplicationStatus;
   rejectionReason?: string;
@@ -59,11 +60,11 @@ export type TLoanRepayment = {
   id: string;
   sequence: number;
   dueAt: string;
-  principalAmount: number;
-  interestAmount: number;
-  totalAmount: number;
-  paidAmount: number;
-  outstandingAmount: number;
+  principalAmount: TPrice;
+  interestAmount: TPrice;
+  totalAmount: TPrice;
+  paidAmount: TPrice;
+  outstandingAmount: TPrice;
   status: LoanRepaymentStatus;
   paidAt?: string;
 };
@@ -71,11 +72,11 @@ export type TLoanRepayment = {
 export type TLoanSchedule = {
   applicationId: string;
   status: LoanApplicationStatus;
-  principal: number;
-  totalInterest: number;
-  totalRepayment: number;
-  totalPaid: number;
-  totalOutstanding: number;
+  principal: TPrice;
+  totalInterest: TPrice;
+  totalRepayment: TPrice;
+  totalPaid: TPrice;
+  totalOutstanding: TPrice;
   disbursedAt?: string;
   finalDueAt?: string;
   repaidAt?: string;

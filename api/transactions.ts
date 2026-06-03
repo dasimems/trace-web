@@ -4,10 +4,11 @@ import {
   TransactionDirection,
   TransactionStatus,
 } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 
 export type TTransactionMetrics = {
-  inflowThisMonth: number;
-  outflowThisMonth: number;
+  inflowThisMonth: TPrice;
+  outflowThisMonth: TPrice;
   inflowSources: number;
   outflowCategories: number;
   pendingCount: number;
@@ -22,10 +23,10 @@ export type TTransaction = {
   status: TransactionStatus;
   category: TransactionCategory;
   description?: string;
-  amount: number;
-  fee: number;
-  principalAmount?: number;
-  settledAmount?: number;
+  amount: TPrice;
+  fee: TPrice;
+  principalAmount?: TPrice;
+  settledAmount?: TPrice;
   currency: string;
   senderName?: string;
   senderAccountNumber?: string;

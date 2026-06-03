@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getSectorAllocation } from "@/api/investments"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 
 const TONE_CYCLE = [
   { fill: "var(--color-good-500)",   dot: "bg-good-500"   },
@@ -87,7 +87,7 @@ export function SectorAllocation({ productId }: { productId: string }) {
                   <span className="truncate">{slice.sector}</span>
                 </span>
                 <span className="font-display tabular-nums text-foreground">
-                  {formatNairaCompact(slice.amount)}
+                  {formatPriceCompact(slice.amount)}
                 </span>
                 <span className="text-right text-xs text-text-3 tabular-nums">
                   {Math.round(slice.percent)}%

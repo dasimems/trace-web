@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getSafeToInvest } from "@/api/investments"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact, type TPrice } from "@/lib/money"
 
 export function SafeToInvestCard() {
   const { data, isLoading, error } = useEndpoint(
@@ -23,10 +23,10 @@ export function SafeToInvestCard() {
           <>
             <div className="flex items-baseline gap-3">
               <span className="font-display text-5xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
-                {formatNairaCompact(data.suggested)}
+                {formatPriceCompact(data.suggested)}
               </span>
               <span className="font-display text-3xl font-medium tabular-nums text-text-3 line-through">
-                {formatNairaCompact(data.aggressive)}
+                {formatPriceCompact(data.aggressive)}
               </span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-text-2">
@@ -72,7 +72,7 @@ function BoundCard({
   highlight,
 }: {
   label: string
-  value: number
+  value: TPrice
   highlight?: boolean
 }) {
   return (
@@ -87,7 +87,7 @@ function BoundCard({
         {label.toUpperCase()}
       </div>
       <div className="mt-1 font-display text-base font-semibold tabular-nums text-foreground">
-        {formatNairaCompact(value)}
+        {formatPriceCompact(value)}
       </div>
     </div>
   )

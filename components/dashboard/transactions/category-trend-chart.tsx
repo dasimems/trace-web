@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCategoryTrend } from "@/api/analysis"
-import { koboToNaira } from "@/lib/money"
 
 const TONE_CYCLE = [
   "var(--color-warn-500)",
@@ -44,8 +43,8 @@ export function CategoryTrendChart() {
     () =>
       data?.items.map((item, i) => ({
         label: humanizeCategory(item.category),
-        avg: koboToNaira(item.average),
-        current: koboToNaira(item.current),
+        avg: item.average.amount,
+        current: item.current.amount,
         fill: TONE_CYCLE[i % TONE_CYCLE.length],
       })) ?? [],
     [data?.items],

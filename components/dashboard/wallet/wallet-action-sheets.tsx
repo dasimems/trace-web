@@ -28,7 +28,6 @@ import {
   type TLookupRecipient,
 } from "@/api/wallet"
 import { TransactionCategory } from "@/lib/enum"
-import { formatNairaWhole, nairaToKobo } from "@/lib/money"
 import useWalletActionsStore, {
   type TWalletActionMode,
 } from "@/stores/wallet-actions-store"
@@ -139,16 +138,16 @@ function FundSheet() {
     },
   })
 
-  const kobo = nairaToKoboOrNull(naira)
-  const disabled = mutation.isPending || kobo === null || kobo < 10_000
+  const amount = parsePositiveNaira(naira)
+  const disabled = mutation.isPending || amount === null || amount < 100
 
   const handleSubmit = () => {
-    if (kobo === null) return
+    if (amount === null) return
     const callbackUrl =
       typeof window !== "undefined"
         ? `${window.location.origin}/app/wallet`
         : undefined
-    mutation.mutate({ amount: kobo, callbackUrl })
+    mutation.mutate({ amount, callbackUrl })
   }
 
   return (
@@ -252,20 +251,20 @@ function SendSheet() {
     /^\d{10}$/.test(accountNumber) &&
     !lookupMutation.isPending &&
     !verified
-  const kobo = nairaToKoboOrNull(naira)
+  const amount = parsePositiveNaira(naira)
   const canSubmit =
     verified !== null &&
-    kobo !== null &&
-    kobo >= 100 &&
+    amount !== null &&
+    amount >= 1 &&
     !transferMutation.isPending
 
   const handleSubmit = () => {
-    if (!verified || kobo === null) return
+    if (!verified || amount === null) return
     transferMutation.mutate({
       bankCode,
       accountNumber,
       accountName: verified.accountName,
-      amount: kobo,
+      amount,
       remark: remark.trim() || undefined,
       category: category || undefined,
     })
@@ -380,13 +379,13 @@ function RequestSheet() {
       ),
   })
 
-  const kobo = nairaToKoboOrNull(naira)
-  const disabled = mutation.isPending || kobo === null || kobo < 10_000
+  const amount = parsePositiveNaira(naira)
+  const disabled = mutation.isPending || amount === null || amount < 100
 
   const handleSubmit = () => {
-    if (kobo === null) return
+    if (amount === null) return
     mutation.mutate({
-      amount: kobo,
+      amount,
       description: description.trim() || undefined,
     })
   }
@@ -442,7 +441,7 @@ function RequestSheet() {
           <p className="text-sm text-text-2">
             Share this link with anyone you want to collect{" "}
             <span className="font-semibold text-foreground">
-              {formatNairaWhole(kobo ?? 0)}
+              {formatNairaPreview(amount ?? 0)}
             </span>{" "}
             from.
           </p>
@@ -499,7 +498,7 @@ function NairaAmountInput({
   helper?: string
   autoFocus?: boolean
 }) {
-  const previewKobo = nairaToKoboOrNull(value)
+  const preview = parsePositiveNaira(value)
   return (
     <Field label="Amount">
       <div className="relative">
@@ -517,9 +516,9 @@ function NairaAmountInput({
           className="h-11 bg-card pl-7 text-base tabular-nums"
         />
       </div>
-      {previewKobo !== null && previewKobo > 0 ? (
+      {preview !== null && preview > 0 ? (
         <p className="text-xs text-text-3">
-          You&rsquo;ll send {formatNairaWhole(previewKobo)}
+          You&rsquo;ll send {formatNairaPreview(preview)}
         </p>
       ) : helper ? (
         <p className="text-xs text-text-3">{helper}</p>
@@ -528,12 +527,23 @@ function NairaAmountInput({
   )
 }
 
-// Parses a user-entered naira string into kobo. Returns null when the value
-// isn't a positive number — used to drive the disabled state on submit.
-function nairaToKoboOrNull(raw: string): number | null {
+const PREVIEW_FORMATTER = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+})
+
+function formatNairaPreview(naira: number): string {
+  return PREVIEW_FORMATTER.format(naira)
+}
+
+// Parses a user-entered naira string into a positive number (major unit).
+// Returns null when the value isn't a positive number — used to drive the
+// disabled state on submit.
+function parsePositiveNaira(raw: string): number | null {
   if (!raw) return null
   const n = Number(raw)
   if (!Number.isFinite(n) || n <= 0) return null
-  return nairaToKobo(n)
+  return Math.round(n * 100) / 100
 }
 

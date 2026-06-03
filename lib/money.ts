@@ -1,43 +1,38 @@
-const NAIRA_FORMATTER = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 2,
-})
-
-const NAIRA_COMPACT_FORMATTER = new Intl.NumberFormat("en-NG", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-})
-
-const NAIRA_NO_DECIMALS_FORMATTER = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 0,
-})
-
-export const koboToNaira = (kobo: number) => kobo / 100
-
-// Convert a user-entered naira amount back to integer kobo. Rounds to handle
-// the floating-point junk that 1.23 -> 123 sometimes runs into.
-export const nairaToKobo = (naira: number) => Math.round(naira * 100)
-
-export const formatNaira = (kobo: number) =>
-  NAIRA_FORMATTER.format(koboToNaira(kobo))
-
-export const formatNairaWhole = (kobo: number) =>
-  NAIRA_NO_DECIMALS_FORMATTER.format(koboToNaira(kobo))
-
-export const formatNairaCompact = (kobo: number) => {
-  const value = koboToNaira(kobo)
-  return `₦${NAIRA_COMPACT_FORMATTER.format(value)}`
-}
-
-export const splitNairaParts = (kobo: number) => {
-  const naira = koboToNaira(kobo)
-  const whole = Math.trunc(naira)
-  const decimal = Math.round((Math.abs(naira) - Math.abs(whole)) * 100)
-  return {
-    whole: `₦${whole.toLocaleString("en-NG")}`,
-    decimal: `.${decimal.toString().padStart(2, "0")}`,
+// Strongly-typed mirror of the backend `Price` object. Every monetary field
+// in the API contract is shaped like this; helpers below operate on it
+// directly.
+export type TPrice = {
+  amount: number
+  currency: {
+    code: string
+    symbol: string
+    name: string
+    locale: string
+  }
+  formatted: {
+    withCurrency: string
+    withoutCurrency: string
+  }
+  parts: {
+    whole: number
+    subUnit: number
+    smallestUnit: number
   }
 }
+
+export const formatPrice = (price: TPrice) => price.formatted.withCurrency
+
+export const formatPriceCompact = (price: TPrice) => {
+  const compact = new Intl.NumberFormat(price.currency.locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  })
+  return `${price.currency.symbol}${compact.format(price.amount)}`
+}
+
+export const splitPriceParts = (price: TPrice) => ({
+  whole: `${price.currency.symbol}${price.parts.whole.toLocaleString(
+    price.currency.locale,
+  )}`,
+  decimal: `.${price.parts.subUnit.toString().padStart(2, "0")}`,
+})

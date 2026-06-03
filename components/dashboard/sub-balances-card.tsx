@@ -7,7 +7,7 @@ import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 import useWalletStore from "@/stores/wallet-store"
 import type { TWalletPocket, TWalletPocketType } from "@/api/wallet"
 
@@ -32,11 +32,18 @@ const BAR_CLASSES: Record<SubBalanceTone, string> = {
 }
 
 function pocketFillPercent(pocket: TWalletPocket, maxBalance: number): number {
-  if (pocket.type === "GOAL" && pocket.targetAmount && pocket.targetAmount > 0) {
-    return Math.min(100, Math.round((pocket.balance / pocket.targetAmount) * 100))
+  if (
+    pocket.type === "GOAL" &&
+    pocket.targetAmount &&
+    pocket.targetAmount.amount > 0
+  ) {
+    return Math.min(
+      100,
+      Math.round((pocket.balance.amount / pocket.targetAmount.amount) * 100),
+    )
   }
   if (maxBalance <= 0) return 0
-  return Math.min(100, Math.round((pocket.balance / maxBalance) * 100))
+  return Math.min(100, Math.round((pocket.balance.amount / maxBalance) * 100))
 }
 
 export function SubBalancesCard() {
@@ -51,7 +58,7 @@ export function SubBalancesCard() {
   }, [hasFetched, fetchPockets])
 
   const maxBalance = useMemo(
-    () => pockets.reduce((acc, p) => Math.max(acc, p.balance), 0),
+    () => pockets.reduce((acc, p) => Math.max(acc, p.balance.amount), 0),
     [pockets],
   )
 
@@ -88,7 +95,7 @@ export function SubBalancesCard() {
                     {pocket.name}
                   </span>
                   <span className="font-display tabular-nums text-foreground">
-                    {formatNairaCompact(pocket.balance)}
+                    {formatPriceCompact(pocket.balance)}
                   </span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">

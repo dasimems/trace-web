@@ -1,5 +1,6 @@
 import { deleteData, getData, patchData, postData } from "@/api";
 import { CopilotRole } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 
 export type TCopilotMessage = {
   id: string;
@@ -129,7 +130,7 @@ export type TCopilotContextRecommendation = {
 
 export type TCopilotContextObligation = {
   label: string;
-  amount: number;
+  amount: TPrice;
   dueAt: string;
 };
 

@@ -12,7 +12,7 @@ import {
   getSpendingBreakdown,
   type TSpendingBreakdownItem,
 } from "@/api/analysis"
-import { formatNairaCompact, formatNairaWhole } from "@/lib/money"
+import { formatPrice, formatPriceCompact } from "@/lib/money"
 
 const TONE_CYCLE: ReadonlyArray<SliceTone> = [
   "warn",
@@ -60,7 +60,7 @@ type SliceView = {
 function toSliceViews(items: TSpendingBreakdownItem[]): SliceView[] {
   return items.map((item, i) => ({
     label: humanizeCategory(item.category),
-    amount: formatNairaCompact(item.amount),
+    amount: formatPriceCompact(item.amount),
     percent: Math.round(item.percent),
     tone: TONE_CYCLE[i % TONE_CYCLE.length],
   }))
@@ -77,7 +77,7 @@ export function SpendingBreakdownCard() {
     () => (data ? toSliceViews(data.items) : []),
     [data],
   )
-  const totalLabel = data ? formatNairaCompact(data.total) : ""
+  const totalLabel = data ? formatPriceCompact(data.total) : ""
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -124,7 +124,7 @@ export function SpendingBreakdownCard() {
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span
                 className="font-display text-xl font-semibold tabular-nums tracking-tight text-foreground"
-                title={data ? formatNairaWhole(data.total) : ""}
+                title={data ? formatPrice(data.total) : ""}
               >
                 {totalLabel}
               </span>

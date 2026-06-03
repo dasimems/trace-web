@@ -1,4 +1,5 @@
 import { getData } from "@/api";
+import type { TPrice } from "@/lib/money";
 
 export type TInsightTone = "good" | "lime" | "info" | "warn" | "bad";
 export type TInsightStatus = "ok" | "insufficient_data";
@@ -14,9 +15,9 @@ export type TWeeklyCashFlowPoint = {
   label: string;
   start: string;
   end: string;
-  income: number;
-  spend: number;
-  forecast?: number;
+  income: TPrice;
+  spend: TPrice;
+  forecast?: TPrice;
 };
 
 export type TCashFlow = {
@@ -27,8 +28,8 @@ export type TWeeklyMoneyFlowPoint = {
   label: string;
   start: string;
   end: string;
-  in: number;
-  out: number;
+  in: TPrice;
+  out: TPrice;
 };
 
 export type TMoneyFlow = {
@@ -37,13 +38,13 @@ export type TMoneyFlow = {
 
 export type TSpendingBreakdownItem = {
   category: string;
-  amount: number;
+  amount: TPrice;
   percent: number;
 };
 
 export type TSpendingBreakdown = {
   items: TSpendingBreakdownItem[];
-  total: number;
+  total: TPrice;
 };
 
 export type TSubScore = {
@@ -117,7 +118,7 @@ export const getMoneyFlow = async () => {
 export type TRecurringPattern = {
   counterparty: string;
   direction: "CREDIT" | "DEBIT";
-  averageAmount: number;
+  averageAmount: TPrice;
   cadence: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "IRREGULAR";
   averageDaysBetween: number;
   occurrences: number;
@@ -133,8 +134,8 @@ export type TAnomaly = {
   transactionId: string;
   reference: string;
   category: string;
-  amount: number;
-  expectedRange: { low: number; high: number };
+  amount: TPrice;
+  expectedRange: { low: TPrice; high: TPrice };
   zScore: number;
   reason: string;
   flaggedAt: string;
@@ -146,8 +147,8 @@ export type TAnomalies = {
 
 export type TCategoryTrendItem = {
   category: string;
-  current: number;
-  average: number;
+  current: TPrice;
+  average: TPrice;
 };
 
 export type TCategoryTrend = {
@@ -176,7 +177,7 @@ export const getAnomalies = async () => {
 export type TSpendHeatmapCell = {
   dayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   hour: number;
-  amount: number;
+  amount: TPrice;
   txCount: number;
 };
 
@@ -184,8 +185,8 @@ export type TSpendHeatmap = {
   cells: TSpendHeatmapCell[];
   rangeStart: string;
   rangeEnd: string;
-  totalSpend: number;
-  peakCell: { dayOfWeek: number; hour: number; amount: number } | null;
+  totalSpend: TPrice;
+  peakCell: { dayOfWeek: number; hour: number; amount: TPrice } | null;
 };
 
 export const getSpendHeatmap = async (days = 30) => {

@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCashFlow } from "@/api/analysis"
-import { koboToNaira } from "@/lib/money"
 
 export function RepaymentForecast() {
   const mounted = useMounted()
@@ -27,8 +26,8 @@ export function RepaymentForecast() {
   const chartData =
     data?.weeks.map((w) => ({
       week: w.label,
-      cash: koboToNaira(Math.max(0, w.income - w.spend)),
-      forecast: w.forecast ? koboToNaira(w.forecast) : null,
+      cash: Math.max(0, w.income.amount - w.spend.amount),
+      forecast: w.forecast ? w.forecast.amount : null,
     })) ?? []
 
   const everyWeekPositive =

@@ -4,6 +4,7 @@ import {
   InvestmentProductType,
   RiskLevel,
 } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 
 export type TInvestmentProduct = {
   id: string;
@@ -12,7 +13,7 @@ export type TInvestmentProduct = {
   type: InvestmentProductType;
   expectedReturnBps: number;
   riskLevel: RiskLevel;
-  minAmount: number;
+  minAmount: TPrice;
   tenorDays?: number;
   description: string;
   aiRationale?: string;
@@ -22,8 +23,8 @@ export type TInvestmentProduct = {
 export type TInvestmentAllocation = {
   id: string;
   productId: string;
-  amount: number;
-  currentValue: number;
+  amount: TPrice;
+  currentValue: TPrice;
   status: InvestmentAllocationStatus;
   allocatedAt?: string;
   withdrawnAt?: string;
@@ -35,13 +36,13 @@ export type TInvestmentAllocation = {
 export type TInvestmentHolding = {
   type: InvestmentProductType;
   label: string;
-  amount: number;
+  amount: TPrice;
   percent: number;
 };
 
 export type TPortfolio = {
-  totalValue: number;
-  totalAllocated: number;
+  totalValue: TPrice;
+  totalAllocated: TPrice;
   totalReturnBps: number;
   holdings: TInvestmentHolding[];
   allocations: TInvestmentAllocation[];
@@ -49,9 +50,9 @@ export type TPortfolio = {
 
 export type TSafeToInvest = {
   status: "ok" | "insufficient_data";
-  suggested: number;
-  conservative: number;
-  aggressive: number;
+  suggested: TPrice;
+  conservative: TPrice;
+  aggressive: TPrice;
   rationale: string;
 };
 
@@ -97,7 +98,7 @@ export const getInvestmentAllocations = async (page = 1, limit = 20) => {
 
 export type TNavHistoryPoint = {
   date: string;
-  navPerUnit: number;
+  navPerUnit: TPrice;
   returnBps: number;
 };
 
@@ -108,7 +109,7 @@ export type TNavHistory = {
 };
 
 export type TNavSnapshot = {
-  navPerUnit: number;
+  navPerUnit: TPrice;
   asOf: string;
   change24hBps: number;
   ytdReturnBps: number;
@@ -117,7 +118,7 @@ export type TNavSnapshot = {
 export type TSectorSlice = {
   sector: string;
   percent: number;
-  amount: number;
+  amount: TPrice;
 };
 
 export type TSectorAllocation = {
@@ -127,8 +128,8 @@ export type TSectorAllocation = {
 export type TDistribution = {
   id: string;
   paidAt: string;
-  amountPerUnit: number;
-  totalPaid: number;
+  amountPerUnit: TPrice;
+  totalPaid: TPrice;
   type: "DIVIDEND" | "INTEREST" | "CAPITAL_GAIN";
 };
 

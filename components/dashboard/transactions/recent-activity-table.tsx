@@ -34,7 +34,7 @@ import {
   TransactionDirection,
   TransactionStatus,
 } from "@/lib/enum"
-import { formatNaira } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 import { formatSmartDate } from "@/lib/functions"
 
 type CategoryTone = "warn" | "lime" | "info" | "purple" | "bad" | "muted"
@@ -132,7 +132,9 @@ function captionFor(
 }
 
 function signedAmount(t: TTransaction): number {
-  return t.direction === TransactionDirection.CREDIT ? t.amount : -t.amount
+  return t.direction === TransactionDirection.CREDIT
+    ? t.amount.amount
+    : -t.amount.amount
 }
 
 export function RecentActivityTable() {
@@ -242,7 +244,7 @@ function ActivityRow({
   const Icon = CAPTION_ICON[caption.kind]
   const meta = CATEGORY_META[t.category]
   const amount = signedAmount(t)
-  const formatted = `${amount >= 0 ? "+" : "-"}${formatNaira(Math.abs(amount))}`
+  const formatted = `${amount >= 0 ? "+" : "-"}${formatPrice(t.amount)}`
   return (
     <TableRow>
       <TableCell>

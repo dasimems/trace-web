@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getMoneyFlow } from "@/api/analysis"
-import { formatNairaCompact, koboToNaira } from "@/lib/money"
 
 export function MoneyInOutChart() {
   const mounted = useMounted()
@@ -28,16 +27,20 @@ export function MoneyInOutChart() {
     () =>
       data?.weeks.map((w) => ({
         week: w.label,
-        in: koboToNaira(w.in),
-        out: koboToNaira(w.out),
+        in: w.in.amount,
+        out: w.out.amount,
       })) ?? [],
     [data?.weeks],
   )
 
   const net = useMemo(
-    () => data?.weeks.reduce((acc, w) => acc + (w.in - w.out), 0) ?? 0,
+    () =>
+      data?.weeks.reduce((acc, w) => acc + (w.in.amount - w.out.amount), 0) ?? 0,
     [data?.weeks],
   )
+
+  const formatCompact = (n: number) =>
+    `₦${new Intl.NumberFormat("en-NG", { notation: "compact", maximumFractionDigits: 1 }).format(n)}`
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
@@ -51,7 +54,7 @@ export function MoneyInOutChart() {
             className="h-6 px-2.5 text-[11px]"
           >
             Net {net >= 0 ? "+" : ""}
-            {formatNairaCompact(net)}
+            {formatCompact(net)}
           </Badge>
         )}
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-2 sm:ml-auto">

@@ -17,7 +17,7 @@ import {
   type TLoanProduct,
 } from "@/api/loans"
 import { constructErrorMessage } from "@/api/functions"
-import { formatNairaWhole } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 import { REPAYMENT_SIMULATOR_ANCHOR_ID } from "@/components/dashboard/loans/apply-now-button"
 
 const TENOR_OPTIONS = [30, 60, 90, 180] as const
@@ -38,7 +38,7 @@ export function RepaymentSimulator() {
     if (activeProduct && !productId) {
       setProductId(activeProduct.id)
       const mid = Math.round(
-        (activeProduct.minAmount + activeProduct.maxAmount) / 2,
+        (activeProduct.minAmount.amount + activeProduct.maxAmount.amount) / 2,
       )
       setAmount(mid)
       const midTenor =
@@ -63,10 +63,13 @@ export function RepaymentSimulator() {
     [products, productId, activeProduct],
   )
 
-  const min = product?.minAmount ?? 100_000_00
-  const max = product?.maxAmount ?? 1_800_000_00
+  const min = product?.minAmount.amount ?? 100_000
+  const max = product?.maxAmount.amount ?? 1_800_000
   const fillPercent =
     amount && max > min ? ((amount - min) / (max - min)) * 100 : 0
+
+  const formatNaira = (n: number) =>
+    n.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })
 
   async function handleApply() {
     if (!productId || !amount) return
@@ -112,7 +115,7 @@ export function RepaymentSimulator() {
             <div>
               <div className="text-sm text-text-3">Amount</div>
               <div className="mt-1 font-display text-3xl font-semibold tabular-nums tracking-tight text-foreground">
-                {amount !== null ? formatNairaWhole(amount) : "—"}
+                {amount !== null ? formatNaira(amount) : "—"}
               </div>
               <div className="relative mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <motion.span
@@ -132,8 +135,8 @@ export function RepaymentSimulator() {
                 />
               </div>
               <div className="mt-1 flex justify-between font-mono text-[11px] text-text-3">
-                <span>{formatNairaWhole(min)}</span>
-                <span>{formatNairaWhole(max)}</span>
+                <span>{formatNaira(min)}</span>
+                <span>{formatNaira(max)}</span>
               </div>
             </div>
 
@@ -169,7 +172,7 @@ export function RepaymentSimulator() {
               label="Weekly pay"
               value={
                 affordability
-                  ? formatNairaWhole(affordability.weeklyPayment)
+                  ? formatPrice(affordability.weeklyPayment)
                   : "—"
               }
             />
@@ -177,7 +180,7 @@ export function RepaymentSimulator() {
               label="Total cost"
               value={
                 affordability
-                  ? formatNairaWhole(affordability.totalRepayment)
+                  ? formatPrice(affordability.totalRepayment)
                   : "—"
               }
             />

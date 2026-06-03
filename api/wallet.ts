@@ -4,14 +4,15 @@ import {
   PaymentRequestStatus,
   TransactionCategory,
 } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 import type { TTransaction } from "@/api/transactions";
 
 export type TWalletBalance = {
-  available: number;
-  ledger: number;
-  pending: number;
-  todayInflow: number;
-  todayOutflow: number;
+  available: TPrice;
+  ledger: TPrice;
+  pending: TPrice;
+  todayInflow: TPrice;
+  todayOutflow: TPrice;
 };
 
 export type TWalletAccount = {
@@ -22,7 +23,7 @@ export type TWalletAccount = {
   customerIdentifier: string;
   beneficiaryAccount?: string | null;
   provider: string;
-  balance: number;
+  balance: TPrice;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -38,8 +39,8 @@ export type TWalletPocket = {
   id: string;
   name: string;
   type: TWalletPocketType;
-  balance: number;
-  targetAmount?: number;
+  balance: TPrice;
+  targetAmount?: TPrice;
   isDefault: boolean;
   accountId: string;
   createdAt?: string;
@@ -166,7 +167,7 @@ export type TFundAccountPayload = {
 export type TFundAccountResponse = {
   checkoutUrl: string;
   reference: string;
-  amount: number;
+  amount: TPrice;
   currency: string;
 };
 
@@ -192,7 +193,7 @@ export type TPaymentRequest = {
   reference: string;
   gatewayRef?: string;
   kind: PaymentRequestKind;
-  amount: number;
+  amount: TPrice;
   currency: string;
   status: PaymentRequestStatus;
   description?: string;
@@ -267,8 +268,8 @@ export type TVirtualCard = {
   expMonth: number;
   expYear: number;
   status: "ACTIVE" | "FROZEN" | "TERMINATED";
-  spendLimitMonthly: number;
-  spentThisMonth: number;
+  spendLimitMonthly: TPrice;
+  spentThisMonth: TPrice;
   createdAt: string;
 };
 

@@ -23,7 +23,7 @@ import {
   type TInvestmentProduct,
 } from "@/api/investments"
 import { constructErrorMessage } from "@/api/functions"
-import { formatNairaCompact, formatNairaWhole } from "@/lib/money"
+import { formatPrice, formatPriceCompact } from "@/lib/money"
 
 function humanize(value: string): string {
   return value
@@ -70,7 +70,14 @@ export default function InvestmentDetailPage({
   const product = productsQuery.data?.find((p) => p.id === id)
 
   const [isAllocating, setIsAllocating] = useState(false)
-  const investAmount = safeQuery.data?.suggested ?? product?.minAmount ?? 25_000_00
+  const investPrice = safeQuery.data?.suggested ?? product?.minAmount
+  const investAmount = investPrice?.amount ?? 25_000
+  const investAmountFormatted = investPrice
+    ? formatPrice(investPrice)
+    : investAmount.toLocaleString("en-NG", { style: "currency", currency: "NGN" })
+  const investAmountCompact = investPrice
+    ? formatPriceCompact(investPrice)
+    : `₦${new Intl.NumberFormat("en-NG", { notation: "compact", maximumFractionDigits: 1 }).format(investAmount)}`
 
   async function handleAllocate() {
     if (!product) return
@@ -78,7 +85,7 @@ export default function InvestmentDetailPage({
     try {
       await allocateInvestment({ productId: product.id, amount: investAmount })
       toast.success(
-        `Allocated ${formatNairaCompact(investAmount)} to ${product.name}.`,
+        `Allocated ${investAmountCompact} to ${product.name}.`,
       )
     } catch (error) {
       const message = constructErrorMessage(
@@ -112,7 +119,7 @@ export default function InvestmentDetailPage({
   const headerStats = [
     { label: "Expected return", value: returnLabel, tone: "good" as const },
     { label: "Risk", value: humanize(product.riskLevel), tone: "default" as const },
-    { label: "Min ticket", value: formatNairaCompact(product.minAmount), tone: "default" as const },
+    { label: "Min ticket", value: formatPriceCompact(product.minAmount), tone: "default" as const },
     {
       label: "Lock-up",
       value: product.tenorDays ? `${product.tenorDays} days` : "Flexible",
@@ -125,6 +132,7 @@ export default function InvestmentDetailPage({
   const projectedValue =
     investAmount +
     Math.round(investAmount * (product.expectedReturnBps / 10000))
+  const projectedValueCompact = `₦${new Intl.NumberFormat("en-NG", { notation: "compact", maximumFractionDigits: 1 }).format(projectedValue)}`
 
   return (
     <>
@@ -227,17 +235,17 @@ export default function InvestmentDetailPage({
             <div className="xl:sticky xl:top-6">
               <DetailRail
                 label="ALLOCATE"
-                hero={formatNairaCompact(projectedValue)}
+                hero={projectedValueCompact}
                 heroCaption={`Projected end value · ${returnLabel} p.a.`}
                 stats={[
-                  { label: "Projected end value", value: formatNairaCompact(projectedValue) },
-                  { label: "You invest", value: formatNairaWhole(investAmount) },
+                  { label: "Projected end value", value: projectedValueCompact },
+                  { label: "You invest", value: investAmountFormatted },
                   { label: "Expected return", value: returnLabel },
                   {
                     label: "Lock-up",
                     value: product.tenorDays ? `${product.tenorDays} days` : "Flexible",
                   },
-                  { label: "Min ticket", value: formatNairaCompact(product.minAmount) },
+                  { label: "Min ticket", value: formatPriceCompact(product.minAmount) },
                   { label: "Provider", value: product.provider },
                 ]}
                 copilotInsight={
@@ -247,7 +255,7 @@ export default function InvestmentDetailPage({
                   </>
                 }
                 trust="Trace-vetted · investment values can go down as well as up. NDIC does not insure investments."
-                primaryLabel={`Invest ${formatNairaWhole(investAmount)}`}
+                primaryLabel={`Invest ${investAmountFormatted}`}
                 secondaryLabel="Compare similar"
                 footer="Funds debit from your Save sub-balance once you confirm."
                 onPrimary={handleAllocate}

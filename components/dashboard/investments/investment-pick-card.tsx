@@ -7,7 +7,7 @@ import { ArrowRight, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { formatNairaCompact } from "@/lib/money"
+import { formatPriceCompact } from "@/lib/money"
 import type { TInvestmentProduct } from "@/api/investments"
 
 function humanize(value: string): string {
@@ -64,7 +64,7 @@ function InvestmentPickCardBase({
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
         <div className="flex gap-6">
           <Stat label="Return" value={returnLabel(product)} />
-          <Stat label="Min" value={formatNairaCompact(product.minAmount)} />
+          <Stat label="Min" value={formatPriceCompact(product.minAmount)} />
           <Stat label="Tenor" value={tenorLabel(product)} />
         </div>
         <Button

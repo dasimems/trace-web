@@ -12,7 +12,7 @@ import {
   type TTransactionMetrics,
 } from "@/api/transactions"
 import { useEndpoint } from "@/hooks/use-endpoint"
-import { formatNairaWhole } from "@/lib/money"
+import { formatPrice } from "@/lib/money"
 
 function normalize(values: ReadonlyArray<number>): ReadonlyArray<number> {
   if (values.length === 0) return []
@@ -78,20 +78,24 @@ function Trends({
   cashFlow: TCashFlow
 }) {
   const netSeries = useMemo(
-    () => cashFlow.weeks.map((w) => w.income - w.spend),
+    () => cashFlow.weeks.map((w) => w.income.amount - w.spend.amount),
     [cashFlow.weeks],
   )
   const spendSeries = useMemo(
-    () => cashFlow.weeks.map((w) => w.spend),
+    () => cashFlow.weeks.map((w) => w.spend.amount),
     [cashFlow.weeks],
   )
   const forecastSeries = useMemo(
     () =>
-      cashFlow.weeks.map((w) => w.forecast ?? 0).filter((v) => v > 0),
+      cashFlow.weeks
+        .map((w) => w.forecast?.amount ?? 0)
+        .filter((v) => v > 0),
     [cashFlow.weeks],
   )
 
-  const netCash = metrics.inflowThisMonth - metrics.outflowThisMonth
+  const netCash = metrics.inflowThisMonth.amount - metrics.outflowThisMonth.amount
+  const formatNairaInt = (n: number) =>
+    n.toLocaleString("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 })
   const projectedSafeToSave = useMemo(() => {
     if (forecastSeries.length === 0) return null
     return Math.max(
@@ -124,7 +128,7 @@ function Trends({
     <>
       <MetricTrendCard
         label="Net cash this month"
-        value={formatNairaWhole(netCash)}
+        value={formatNairaInt(netCash)}
         caption={`${cashFlow.weeks.length} weeks of activity`}
         {...netPill}
         series={normalizedNet}
@@ -132,7 +136,7 @@ function Trends({
       />
       <MetricTrendCard
         label="Spending"
-        value={formatNairaWhole(metrics.outflowThisMonth)}
+        value={formatPrice(metrics.outflowThisMonth)}
         caption={`${metrics.outflowCategories} categories this month`}
         {...spendPill}
         series={normalizedSpend}
@@ -142,7 +146,7 @@ function Trends({
         label="Safe-to-save"
         value={
           projectedSafeToSave !== null
-            ? formatNairaWhole(projectedSafeToSave)
+            ? formatNairaInt(projectedSafeToSave)
             : "—"
         }
         caption={

@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getCashFlow } from "@/api/analysis"
-import { koboToNaira } from "@/lib/money"
 
 type ChartPoint = {
   week: string
@@ -32,9 +31,9 @@ export function CashFlowChart() {
     () =>
       data?.weeks.map((w) => ({
         week: w.label,
-        income: koboToNaira(w.income),
-        spend: koboToNaira(w.spend),
-        forecast: w.forecast ? koboToNaira(w.forecast) : null,
+        income: w.income.amount,
+        spend: w.spend.amount,
+        forecast: w.forecast ? w.forecast.amount : null,
       })) ?? [],
     [data?.weeks],
   )

@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils"
 import { useMounted } from "@/hooks/use-mounted"
 import { useEndpoint } from "@/hooks/use-endpoint"
 import { getNavHistory } from "@/api/investments"
-import { koboToNaira } from "@/lib/money"
 
 type Period = "YTD" | "1Y" | "3Y"
 const PERIODS: ReadonlyArray<Period> = ["YTD", "1Y", "3Y"]
@@ -37,7 +36,7 @@ export function PerformanceChart({ productId }: { productId: string }) {
     () =>
       data?.points.map((p) => ({
         date: p.date,
-        nav: koboToNaira(p.navPerUnit),
+        nav: p.navPerUnit.amount,
       })) ?? [],
     [data?.points],
   )

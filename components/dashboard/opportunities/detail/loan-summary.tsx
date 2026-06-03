@@ -8,7 +8,7 @@ import {
   getOpportunityPersonalized,
   type TOpportunity,
 } from "@/api/opportunities"
-import { formatNaira, formatNairaCompact } from "@/lib/money"
+import { formatPrice, formatPriceCompact } from "@/lib/money"
 
 type Props = {
   opportunity: TOpportunity
@@ -25,13 +25,13 @@ export function EstimatedForYouCard({ opportunity }: Props) {
     if (data.estimatedNetReceived !== undefined) {
       rows.push({
         label: "You receive",
-        value: formatNaira(data.estimatedNetReceived),
+        value: formatPrice(data.estimatedNetReceived),
       })
     }
     if (data.estimatedMonthlyCost !== undefined) {
       rows.push({
         label: "Monthly cost",
-        value: formatNaira(data.estimatedMonthlyCost),
+        value: formatPrice(data.estimatedMonthlyCost),
       })
     }
     if (data.weeklyBufferPercent !== undefined) {
@@ -138,32 +138,32 @@ export function CostBreakdownCard({ opportunity }: Props) {
                   )}
                 </span>
                 <span className="font-display tabular-nums text-foreground">
-                  {formatNaira(line.amount)}
+                  {formatPrice(line.amount)}
                 </span>
               </li>
             ))}
           </ul>
 
-          {(data.totalUpfront > 0 || data.totalRecurring > 0) && (
+          {(data.totalUpfront.amount > 0 || data.totalRecurring.amount > 0) && (
             <div className="mt-4 space-y-1 border-t border-border pt-4">
-              {data.totalUpfront > 0 && (
+              {data.totalUpfront.amount > 0 && (
                 <div className="flex items-baseline justify-between">
                   <span className="font-display text-base font-semibold text-foreground">
                     Upfront
                   </span>
                   <span className="font-display text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-                    {formatNairaCompact(data.totalUpfront)}
+                    {formatPriceCompact(data.totalUpfront)}
                   </span>
                 </div>
               )}
-              {data.totalRecurring > 0 && (
+              {data.totalRecurring.amount > 0 && (
                 <div className="flex items-baseline justify-between text-sm text-text-2">
                   <span>
                     Recurring ·{" "}
                     {CYCLE_LABEL[data.cycle ?? "MONTHLY"]}
                   </span>
                   <span className="font-display tabular-nums text-foreground">
-                    {formatNaira(data.totalRecurring)}
+                    {formatPrice(data.totalRecurring)}
                   </span>
                 </div>
               )}

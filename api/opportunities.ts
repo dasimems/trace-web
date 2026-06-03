@@ -1,5 +1,6 @@
 import { deleteData, getData, postData } from "@/api";
 import { OpportunitySource } from "@/lib/enum";
+import type { TPrice } from "@/lib/money";
 
 export type TOpportunityProvider = {
   name: string;
@@ -58,21 +59,21 @@ export const unsaveOpportunity = (source: OpportunitySource, id: string) =>
   deleteData<void>(`${opportunityPath(source, id)}/save`);
 
 export type TOpportunitySimulation = {
-  inputAmount: number;
+  inputAmount: TPrice;
   inputTenorDays: number;
-  totalRepayment?: number;
-  totalInterest?: number;
-  weeklyPayment?: number;
-  dailyPayment?: number;
+  totalRepayment?: TPrice;
+  totalInterest?: TPrice;
+  weeklyPayment?: TPrice;
+  dailyPayment?: TPrice;
   isAffordable?: boolean;
-  projectedValue?: number;
+  projectedValue?: TPrice;
   projectedReturnBps?: number;
   eligibilityScore?: number;
 };
 
 export type TOpportunityPersonalized = {
-  estimatedNetReceived?: number;
-  estimatedMonthlyCost?: number;
+  estimatedNetReceived?: TPrice;
+  estimatedMonthlyCost?: TPrice;
   weeklyBufferPercent?: number;
   approvalConfidencePercent: number;
   oneLiner: string;
@@ -80,14 +81,14 @@ export type TOpportunityPersonalized = {
 
 export type TCostBreakdownItem = {
   label: string;
-  amount: number;
+  amount: TPrice;
   recurring: boolean;
 };
 
 export type TCostBreakdown = {
   items: TCostBreakdownItem[];
-  totalUpfront: number;
-  totalRecurring: number;
+  totalUpfront: TPrice;
+  totalRecurring: TPrice;
   cycle?: "WEEKLY" | "MONTHLY" | "DAILY";
 };
 
